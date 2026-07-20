@@ -1065,10 +1065,7 @@
       };
     });
 
-    const CHIEF_PASSWORD_STORAGE_KEY = "jhah-chief-password-2027";
-    const DEFAULT_CHIEF_PASSWORD = "2027";
-    const CHIEF_BYPASS = "AhmeDistheBest";
-    const getChiefPassword = () => localStorage.getItem(CHIEF_PASSWORD_STORAGE_KEY) || DEFAULT_CHIEF_PASSWORD;
+    let chiefToken = sessionStorage.getItem("jhah-chief-token-2027") || "";
 
     let requestedResidents = cloneResidents(BASELINE);
     let actualResidents = cloneResidents(BASELINE);
@@ -1187,8 +1184,22 @@
       return { version: 2, savedAt, requestedResidents, actualResidents, requestMeta, theme: els.theme.value };
     }
 
-    function loadSaved() {
+    async function loadSaved() {
       try {
+        const response = await fetch("/api/schedule");
+        if (response.ok) {
+          const remote = await response.json();
+          if (remote.state) {
+            const parsed = remote.state;
+            requestedResidents = normalizedPeople(parsed.requestedResidents);
+            actualResidents = normalizedPeople(parsed.actualResidents);
+            requestMeta = parsed.requestMeta && typeof parsed.requestMeta === "object" ? parsed.requestMeta : {};
+            els.theme.value = THEMES[parsed.theme] ? parsed.theme : "day";
+            setSavedLabel(`Shared save ${formatTimestamp(remote.savedAt || parsed.savedAt)}`, "is-saved");
+            render();
+            return;
+          }
+        }
         const current = localStorage.getItem(STORAGE_KEY);
         if (current) {
           const parsed = JSON.parse(current);
@@ -1218,12 +1229,17 @@
       return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(date);
     }
 
-    function saveChanges(message = "Both schedule versions were saved on this device.") {
+    async function saveChanges(message = "Schedule saved for everyone using this link.") {
       const savedAt = new Date().toISOString();
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeState(savedAt)));
-      dirty = false;
-      setSavedLabel(`Saved ${formatTimestamp(savedAt)}`, "is-saved");
-      toast(message, "success");
+      const state = serializeState(savedAt);
+      try {
+        const response = await fetch("/api/schedule", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ state }) });
+        if (!response.ok) throw new Error("Shared save failed");
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        dirty = false;
+        setSavedLabel(`Shared save ${formatTimestamp(savedAt)}`, "is-saved");
+        toast(message, "success");
+      } catch (error) { toast("Shared save is unavailable. Check the connection and try again.", "warn"); }
     }
 
     function setTheme(theme, persist = true) {
@@ -1624,13 +1640,12 @@
       setTimeout(() => els.chiefPassword.focus(), 0);
     }
 
-    function signInChief(event) {
+    async function signInChief(event) {
       event.preventDefault();
-      if (els.chiefPassword.value !== getChiefPassword() && els.chiefPassword.value !== CHIEF_BYPASS) {
-        els.chiefError.textContent = "Incorrect password. Please try again.";
-        els.chiefPassword.select();
-        return;
-      }
+      const response = await fetch("/api/chief/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: els.chiefPassword.value }) });
+      if (!response.ok) { els.chiefError.textContent = "Incorrect password. Please try again."; els.chiefPassword.select(); return; }
+      chiefToken = (await response.json()).token;
+      sessionStorage.setItem("jhah-chief-token-2027", chiefToken);
       chiefSignedIn = true;
       signedResidentId = null;
       els.chiefDialog.close();
@@ -1649,14 +1664,9 @@
       setTimeout(() => els.currentChiefPassword.focus(), 0);
     }
 
-    function changeChiefPassword(event) {
+    async function changeChiefPassword(event) {
       event.preventDefault();
-      const current = els.currentChiefPassword.value;
       const next = els.newChiefPassword.value;
-      if (current !== getChiefPassword() && current !== CHIEF_BYPASS) {
-        els.changeChiefPasswordError.textContent = "Current chief password is incorrect.";
-        return;
-      }
       if (next.length < 8) {
         els.changeChiefPasswordError.textContent = "Choose a password with at least 8 characters.";
         return;
@@ -1665,9 +1675,12 @@
         els.changeChiefPasswordError.textContent = "The new passwords do not match.";
         return;
       }
-      localStorage.setItem(CHIEF_PASSWORD_STORAGE_KEY, next);
+      const check = await fetch("/api/chief/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: els.currentChiefPassword.value }) });
+      if (!check.ok) { els.changeChiefPasswordError.textContent = "Current chief password is incorrect."; return; }
+      const response = await fetch("/api/chief/password", { method: "PUT", headers: { "content-type": "application/json", "x-chief-token": chiefToken }, body: JSON.stringify({ password: next }) });
+      if (!response.ok) { els.changeChiefPasswordError.textContent = "Password update failed. Please sign in again."; return; }
       els.changeChiefPasswordDialog.close();
-      toast("Chief password updated on this device.", "success");
+      toast("Chief password updated for the shared workspace.", "success");
     }
 
     function signOutChief() {
@@ -1842,8 +1855,11 @@
       });
     }
 
-    function resetBaseline() {
-      if (!confirm("Restore the exact image baseline? This removes requested and final changes saved in this browser.")) return;
+    async function resetBaseline() {
+      if (!chiefToken) { openChiefDialog(); toast("Chief password is required to restore the baseline.", "warn"); return; }
+      if (!confirm("Restore the exact image baseline for everyone? This removes all shared requested and final changes.")) return;
+      const response = await fetch("/api/baseline/restore", { method: "POST", headers: { "x-chief-token": chiefToken } });
+      if (!response.ok) { toast("Chief password is required to restore the baseline.", "warn"); return; }
       requestedResidents = cloneResidents(BASELINE);
       actualResidents = cloneResidents(BASELINE);
       requestMeta = {};
@@ -1854,8 +1870,6 @@
       undoStack = [];
       redoStack = [];
       dirty = false;
-      localStorage.removeItem(STORAGE_KEY);
-      localStorage.removeItem(LEGACY_KEY);
       setSavedLabel("Reference baseline");
       setView("requested");
       toast("Both schedules were restored to the supplied image baseline.", "success");
