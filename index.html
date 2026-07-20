@@ -156,6 +156,8 @@
     .button:disabled { opacity: .42; cursor: not-allowed; }
     .button.primary { border-color: var(--accent); background: var(--accent); color: #fff; }
     .button.primary:hover { border-color: var(--accent-strong); background: var(--accent-strong); color: #fff; }
+    .button.pdf-export { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-strong); }
+    .button.pdf-export:hover { background: var(--accent); color: #fff; }
     .button.quiet { border-color: transparent; background: transparent; }
     .button.danger { color: var(--danger); }
     .account-button { max-width: 190px; overflow: hidden; text-overflow: ellipsis; }
@@ -761,6 +763,7 @@
           <button id="editCheckBtn" class="button chief-action" type="button">Check to edit</button>
           <button id="editRequestsBtn" class="button resident-action" type="button">Edit my requests</button>
           <button id="exportBtn" class="button" type="button">Export requested Excel</button>
+          <button id="exportPdfBtn" class="button pdf-export" type="button" hidden>Export final PDF</button>
           <button id="saveBtn" class="button primary" type="button">Save changes</button>
         </div>
       </section>
@@ -1105,6 +1108,7 @@
       editCheck: document.getElementById("editCheckBtn"),
       editRequests: document.getElementById("editRequestsBtn"),
       exportButton: document.getElementById("exportBtn"),
+      exportPdfButton: document.getElementById("exportPdfBtn"),
       saveButton: document.getElementById("saveBtn"),
       rotationPanel: document.getElementById("rotationPanel"),
       palette: document.getElementById("palette"),
@@ -1561,6 +1565,7 @@
       els.rotationPanel.hidden = !isActual;
       els.exportButton.hidden = isComparison || isSpecialty;
       els.exportButton.textContent = isActual ? "Export final Excel" : "Export requested Excel";
+      els.exportPdfButton.hidden = !isActual;
       els.saveButton.hidden = isComparison || isSpecialty;
       els.zoomControl.hidden = isComparison || isSpecialty;
       els.comparisonToggleAll.hidden = !isComparison;
@@ -2234,6 +2239,111 @@
       toast("All specialties exported to one Excel workbook.", "success");
     }
 
+    function makeFinalSchedulePdf() {
+      const pageWidth = 1191;
+      const pageHeight = 842;
+      const tableX = 28;
+      const tableTop = 758;
+      const headerRowHeight = 20;
+      const bodyTop = tableTop - headerRowHeight * 2;
+      const rowHeight = 16.3;
+      const columnWidths = [82, 30, ...Array(13).fill(70), 30, 82];
+      const columnX = columnWidths.reduce((positions, width) => [...positions, positions[positions.length - 1] + width], [tableX]);
+      const pdfEscape = value => String(value ?? "").replace(/[^\x20-\x7E]/g, "-").replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
+      const hexRgb = value => {
+        const hex = value.replace("#", "");
+        return [0, 2, 4].map(index => (parseInt(hex.slice(index, index + 2), 16) / 255).toFixed(3)).join(" ");
+      };
+      const readableInk = value => {
+        const hex = value.replace("#", "");
+        const [r, g, b] = [0, 2, 4].map(index => parseInt(hex.slice(index, index + 2), 16));
+        return r * 0.299 + g * 0.587 + b * 0.114 < 145 ? "1 1 1" : "0.10 0.16 0.17";
+      };
+      const text = (value, x, y, font = "F1", size = 7, color = "0.10 0.16 0.17") => `BT /${font} ${size} Tf ${color} rg 1 0 0 1 ${x.toFixed(1)} ${y.toFixed(1)} Tm (${pdfEscape(value)}) Tj ET`;
+      const centeredText = (value, left, width, y, font = "F1", size = 7, color = "0.10 0.16 0.17") => {
+        const estimatedWidth = String(value ?? "").length * size * 0.48;
+        return text(value, left + Math.max(2, (width - estimatedWidth) / 2), y, font, size, color);
+      };
+      const fill = (color, x, y, width, height) => `${color} rg ${x.toFixed(1)} ${y.toFixed(1)} ${width.toFixed(1)} ${height.toFixed(1)} re f`;
+      const line = (x1, y1, x2, y2, color = "0.78 0.84 0.85", weight = 0.45) => `${color} RG ${weight} w ${x1.toFixed(1)} ${y1.toFixed(1)} m ${x2.toFixed(1)} ${y2.toFixed(1)} l S`;
+      const theme = THEMES[els.theme.value] || THEMES.day;
+      const headerColor = hexRgb(`#${theme.header}`);
+      const softColor = hexRgb(`#${theme.soft}`);
+      const commands = [
+        fill("0.965 0.976 0.976", 0, 0, pageWidth, pageHeight),
+        fill(headerColor, 0, 760, pageWidth, 82),
+        text("JHAH  /  RESIDENCY OPERATIONS", 28, 815, "F2", 8, "0.72 0.90 0.88"),
+        text("JHAH Resident Block Distribution, 2027", 28, 786, "F2", 20, "1 1 1"),
+        fill("0.12 0.36 0.39", 1040, 779, 123, 42),
+        centeredText(actualResidents.length, 1040, 123, 800, "F2", 15, "1 1 1"),
+        centeredText("RESIDENTS", 1040, 123, 787, "F1", 6, "0.72 0.90 0.88"),
+        fill(headerColor, tableX, tableTop - headerRowHeight, columnWidths[0], headerRowHeight * 2),
+        fill(headerColor, columnX[1], tableTop - headerRowHeight, columnWidths[1], headerRowHeight * 2),
+        fill(headerColor, columnX[15], tableTop - headerRowHeight, columnWidths[15], headerRowHeight * 2),
+        fill(headerColor, columnX[16], tableTop - headerRowHeight, columnWidths[16], headerRowHeight * 2),
+        centeredText("RESIDENT", columnX[0], columnWidths[0], tableTop - 25, "F2", 7, "1 1 1"),
+        centeredText("YEAR", columnX[1], columnWidths[1], tableTop - 25, "F2", 6, "1 1 1"),
+        centeredText("NEXT", columnX[15], columnWidths[15], tableTop - 25, "F2", 6, "1 1 1"),
+        centeredText("RESIDENT", columnX[16], columnWidths[16], tableTop - 25, "F2", 7, "1 1 1"),
+      ];
+      BLOCKS.forEach(([block, dates], index) => {
+        const x = columnX[index + 2];
+        commands.push(fill(headerColor, x, tableTop - headerRowHeight, columnWidths[index + 2], headerRowHeight));
+        commands.push(fill(softColor, x, tableTop - headerRowHeight * 2, columnWidths[index + 2], headerRowHeight));
+        commands.push(centeredText(block, x, columnWidths[index + 2], tableTop - 13, "F2", 6.2, "1 1 1"));
+        commands.push(centeredText(dates.replace(/[^\x20-\x7E]/g, "-"), x, columnWidths[index + 2], tableTop - 33, "F1", 4.8, "0.17 0.30 0.32"));
+      });
+      actualResidents.forEach((person, rowIndex) => {
+        const y = bodyTop - (rowIndex + 1) * rowHeight;
+        const isAlternate = rowIndex % 2 === 1;
+        if (isAlternate) commands.push(fill("0.985 0.990 0.990", tableX, y, columnX.at(-1) - tableX, rowHeight));
+        if (rowIndex && actualResidents[rowIndex - 1].level !== person.level) commands.push(line(tableX, y + rowHeight, columnX.at(-1), y + rowHeight, headerColor, 2));
+        commands.push(text(person.name, columnX[0] + 4, y + 5.4, "F2", 6.2));
+        commands.push(centeredText(person.level, columnX[1], columnWidths[1], y + 5.4, "F2", 6));
+        person.assignments.forEach((rotationName, blockIndex) => {
+          if (!rotationName) return;
+          const rotation = rotationByName(rotationName);
+          const x = columnX[blockIndex + 2];
+          const color = rotation ? hexRgb(rotation.fill) : softColor;
+          const ink = rotation ? readableInk(rotation.fill) : "0.10 0.16 0.17";
+          commands.push(fill(color, x + 0.5, y + 0.5, columnWidths[blockIndex + 2] - 1, rowHeight - 1));
+          commands.push(centeredText(rotationName, x, columnWidths[blockIndex + 2], y + 5.2, "F2", 4.5, ink));
+        });
+        commands.push(centeredText(person.endLevel, columnX[15], columnWidths[15], y + 5.4, "F2", 6));
+        commands.push(text(person.name, columnX[16] + 4, y + 5.4, "F2", 6.2));
+        commands.push(line(tableX, y, columnX.at(-1), y));
+      });
+      columnX.forEach(x => commands.push(line(x, bodyTop - actualResidents.length * rowHeight, x, tableTop)));
+      commands.push(line(tableX, tableTop, columnX.at(-1), tableTop, headerColor, 1));
+      commands.push(line(tableX, bodyTop, columnX.at(-1), bodyTop, headerColor, 1));
+      commands.push(text("Academic cycle 2026-2027", 28, 25, "F2", 7, "0.27 0.38 0.40"));
+      commands.push(text(`Generated ${new Date().toLocaleString("en-US", { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`, 950, 25, "F1", 7, "0.38 0.47 0.49"));
+      const stream = commands.join("\n");
+      const objects = [
+        "<< /Type /Catalog /Pages 2 0 R >>",
+        "<< /Type /Pages /Count 1 /Kids [5 0 R] >>",
+        "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+        "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>",
+        `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 6 0 R >>`,
+        `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`,
+      ];
+      let pdf = "%PDF-1.4\n";
+      const offsets = [0];
+      objects.forEach((object, index) => { offsets.push(pdf.length); pdf += `${index + 1} 0 obj\n${object}\nendobj\n`; });
+      const xref = pdf.length;
+      pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n${offsets.slice(1).map(offset => `${String(offset).padStart(10, "0")} 00000 n \n`).join("")}trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+      return new Blob([pdf], { type: "application/pdf" });
+    }
+
+    function exportFinalPdf() {
+      if (!chiefSignedIn || activeView !== "actual") {
+        toast("Open Final Done by the Chief to export its PDF.", "warn");
+        return;
+      }
+      downloadBlob(makeFinalSchedulePdf(), "JHAH-Resident-Final-Distribution-2027.pdf");
+      toast(`Final schedule exported as a polished ${THEMES[els.theme.value].label} PDF.`, "success");
+    }
+
     function exportExcel(forceFinal = false) {
       const isFinal = forceFinal || activeView === "actual";
       const sheetName = isFinal ? "Final Schedule" : "Requested Schedule";
@@ -2393,6 +2503,7 @@
     els.redo.addEventListener("click", redo);
     els.saveButton.addEventListener("click", () => saveChanges());
     els.exportButton.addEventListener("click", exportExcel);
+    els.exportPdfButton.addEventListener("click", exportFinalPdf);
     els.reset.addEventListener("click", resetBaseline);
     document.addEventListener("keydown", event => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
