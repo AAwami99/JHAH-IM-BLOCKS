@@ -1,0 +1,16 @@
+name: Keep Render service awake
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wake the shared resident schedule
+        run: curl --fail --silent --show-error --retry 3 https://jhah-blocks-shared.onrender.com/api/health
