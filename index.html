@@ -1,0 +1,2403 @@
+<!doctype html>
+<html lang="en" data-theme="day">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="JHAH Resident Block Distribution for the 2026–2027 academic year." />
+  <title>JHAH Resident Block Distribution, 2027</title>
+  <style>
+    :root, html[data-theme="day"] {
+      color-scheme: light;
+      --canvas: #edf1f1;
+      --paper: #ffffff;
+      --paper-2: #f7f9f9;
+      --ink: #152429;
+      --muted: #627278;
+      --line: #d4dcde;
+      --line-strong: #acbabc;
+      --accent: #0b666a;
+      --accent-strong: #084b50;
+      --accent-soft: #e1f0ef;
+      --nav: #153d46;
+      --nav-ink: #ffffff;
+      --success: #287153;
+      --warning: #8d5b10;
+      --danger: #934039;
+      --shadow: 0 7px 22px rgba(21, 50, 55, .08);
+      --radius: 10px;
+    }
+
+    html[data-theme="night"] {
+      color-scheme: dark;
+      --canvas: #161c20;
+      --paper: #21292e;
+      --paper-2: #273137;
+      --ink: #edf2f3;
+      --muted: #aab6ba;
+      --line: #3c484e;
+      --line-strong: #5b686e;
+      --accent: #6eb7b3;
+      --accent-strong: #a0d5d1;
+      --accent-soft: #284340;
+      --nav: #0f262d;
+      --nav-ink: #f5fbfb;
+      --success: #7bc6a1;
+      --warning: #ddb76e;
+      --danger: #e2958d;
+      --shadow: 0 8px 24px rgba(0, 0, 0, .22);
+    }
+
+    * { box-sizing: border-box; }
+    html { background: var(--canvas); }
+    body {
+      margin: 0;
+      min-width: 0;
+      background: var(--canvas);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    button, input, select { font: inherit; }
+    button, select { color: inherit; }
+    button { cursor: pointer; }
+    [hidden] { display: none !important; }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .app-shell { width: min(1880px, calc(100% - 30px)); margin: 15px auto 28px; }
+    .masthead {
+      display: grid;
+      grid-template-columns: minmax(500px, 1fr) auto;
+      align-items: center;
+      gap: 32px;
+      padding: 15px 18px 14px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-top: 4px solid var(--accent);
+      border-bottom: 0;
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+    .identity { display: flex; align-items: center; gap: 14px; min-width: 0; }
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      flex: 0 0 42px;
+      border: 1px solid var(--accent);
+      color: var(--accent-strong);
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: -.03em;
+    }
+    .eyebrow { color: var(--accent); font-size: 10px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+    h1 { margin: 3px 0 0; font-size: clamp(21px, 2vw, 28px); line-height: 1.12; letter-spacing: -.035em; font-weight: 720; }
+    .title-subline { margin: 5px 0 0; color: var(--muted); font-size: 10px; }
+    .header-command {
+      display: grid;
+      grid-template-columns: auto auto;
+      align-items: center;
+      gap: 18px;
+    }
+    .cycle-brief { min-width: 168px; padding: 3px 18px; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+    .cycle-brief span { display: block; color: var(--muted); font-size: 9px; font-weight: 760; letter-spacing: .08em; text-transform: uppercase; }
+    .cycle-brief strong { display: block; margin: 2px 0; font-size: 18px; line-height: 1.1; letter-spacing: -.03em; }
+    .cycle-brief small { display: block; color: var(--muted); font-size: 9px; }
+    .mast-actions { display: grid; grid-template-columns: auto auto auto; align-items: end; justify-content: end; gap: 5px 8px; }
+    .control-label { color: var(--muted); font-size: 9px; font-weight: 760; letter-spacing: .08em; text-transform: uppercase; }
+    .theme-control { display: grid; gap: 3px; }
+    .saved-indicator {
+      grid-column: 1 / -1;
+      color: var(--muted);
+      font-size: 10px;
+      text-align: right;
+    }
+    .saved-indicator.is-dirty { color: var(--warning); }
+    .saved-indicator.is-saved { color: var(--success); }
+
+    .field-select, .field-input {
+      min-height: 36px;
+      border: 1px solid var(--line-strong);
+      border-radius: 6px;
+      background: var(--paper);
+      color: var(--ink);
+      padding: 7px 10px;
+      outline: 0;
+    }
+    .field-select:focus, .field-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .theme-select { width: 126px; }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 36px;
+      padding: 7px 11px;
+      border: 1px solid var(--line-strong);
+      border-radius: 6px;
+      background: var(--paper);
+      color: var(--ink);
+      font-weight: 650;
+      white-space: nowrap;
+    }
+    .button:hover { border-color: var(--accent); color: var(--accent-strong); }
+    .button:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 1px; }
+    .button:disabled { opacity: .42; cursor: not-allowed; }
+    .button.primary { border-color: var(--accent); background: var(--accent); color: #fff; }
+    .button.primary:hover { border-color: var(--accent-strong); background: var(--accent-strong); color: #fff; }
+    .button.quiet { border-color: transparent; background: transparent; }
+    .button.danger { color: var(--danger); }
+    .account-button { max-width: 190px; overflow: hidden; text-overflow: ellipsis; }
+    .chief-access-button { border-color: var(--nav); background: var(--nav); color: var(--nav-ink); }
+    .chief-access-button:hover { border-color: var(--accent); background: var(--accent-strong); color: #fff; }
+
+    .view-tabs {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      padding: 0 12px;
+      background: var(--nav);
+      color: var(--nav-ink);
+      border-radius: 0 0 var(--radius) var(--radius);
+    }
+    .view-tab {
+      position: relative;
+      min-height: 47px;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      padding: 0 17px;
+      font-weight: 670;
+      opacity: .72;
+    }
+    .view-tab:hover { opacity: 1; }
+    .view-tab.is-locked { opacity: .55; }
+    .tab-lock { margin-left: 7px; padding: 2px 5px; border: 1px solid rgba(255,255,255,.25); border-radius: 999px; font-size: 8px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+    .view-tab[aria-selected="true"] { opacity: 1; }
+    .view-tab[aria-selected="true"]::after {
+      content: "";
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      bottom: 0;
+      height: 3px;
+      background: #8bd0ca;
+    }
+    .role-state { margin-left: auto; padding: 0 8px; color: rgba(255,255,255,.65); font-size: 10px; font-weight: 650; }
+    .role-state.is-chief { color: #a8ded8; }
+
+    .workspace { margin-top: 12px; }
+    .context-strip {
+      display: grid;
+      grid-template-columns: minmax(340px, 1fr) auto;
+      align-items: center;
+      gap: 22px;
+      padding: 13px 16px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+    .context-strip h2 { margin: 0; font-size: 16px; letter-spacing: -.015em; }
+    .context-strip p { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
+    .context-metrics { display: flex; align-items: center; gap: 18px; }
+    .metric { min-width: 64px; border-left: 1px solid var(--line); padding-left: 14px; }
+    .metric strong { display: block; font-size: 17px; line-height: 1.1; }
+    .metric span { display: block; margin-top: 3px; color: var(--muted); font-size: 9px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 10px 12px;
+      background: var(--paper-2);
+      border: 1px solid var(--line);
+      border-top: 0;
+    }
+    .filters, .toolbar-actions, .zoom-control { display: flex; align-items: center; gap: 7px; }
+    .search-input { width: 210px; }
+    .level-filter { width: 108px; }
+    .toolbar-divider { width: 1px; height: 26px; background: var(--line); margin: 0 2px; }
+    .zoom-control { gap: 0; }
+    .zoom-control .button { min-width: 36px; border-radius: 0; margin-left: -1px; }
+    .zoom-control .button:first-child { border-radius: 6px 0 0 6px; margin-left: 0; }
+    .zoom-control .button:last-child { border-radius: 0 6px 6px 0; }
+    .zoom-label { min-width: 70px !important; font-size: 12px; }
+
+    .rotation-panel {
+      padding: 11px 12px 12px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-top: 0;
+    }
+    .rotation-heading { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+    .rotation-heading strong { font-size: 12px; }
+    .rotation-heading span { color: var(--muted); font-size: 11px; }
+    .palette { display: flex; flex-wrap: wrap; gap: 6px; }
+    .rotation-chip {
+      min-height: 29px;
+      padding: 5px 9px;
+      border: 1px solid var(--chip-border);
+      border-radius: 5px;
+      background: var(--chip-fill);
+      color: var(--chip-ink);
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .rotation-chip[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .rotation-chip.clear-chip { --chip-fill: var(--paper-2); --chip-border: var(--line-strong); --chip-ink: var(--danger); }
+
+    .schedule-card, .summary-card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-top: 0;
+    }
+    .card-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 11px 13px;
+      border-bottom: 1px solid var(--line);
+    }
+    .card-bar h3 { margin: 0; font-size: 14px; }
+    .card-bar p { margin: 2px 0 0; color: var(--muted); font-size: 11px; }
+    .mode-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 27px;
+      padding: 4px 9px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--paper-2);
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 760;
+      letter-spacing: .03em;
+    }
+    .mode-pill.is-open { border-color: #d2b67d; color: var(--warning); background: #fff7e7; }
+    html[data-theme="night"] .mode-pill.is-open { background: #3b3324; }
+
+    .table-shell { width: 100%; overflow-x: auto; overflow-y: visible; background: var(--paper); }
+    .schedule-table {
+      width: var(--table-width, 100%);
+      min-width: var(--table-min-width, 100%);
+      border-collapse: separate;
+      border-spacing: 0;
+      table-layout: fixed;
+      font-size: var(--table-font, 8px);
+      transition: width .15s ease, font-size .15s ease;
+    }
+    .schedule-table.is-comparison { width: 100% !important; min-width: 0 !important; font-size: 11px !important; table-layout: fixed; }
+    .schedule-table col.resident-col { width: 76px; }
+    .schedule-table col.level-col, .schedule-table col.end-level-col { width: 42px; }
+    .schedule-table col.block-col { width: auto; }
+    .schedule-table col.end-resident-col { width: 62px; }
+    .schedule-table th, .schedule-table td {
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      padding: 0;
+      text-align: center;
+      vertical-align: middle;
+    }
+    .schedule-table th:last-child, .schedule-table td:last-child { border-right: 0; }
+    .schedule-table thead th {
+      background: var(--paper-2);
+      color: var(--ink);
+      font-weight: 750;
+    }
+    .schedule-table thead tr:first-child th { height: 32px; padding: 5px 3px 1px; vertical-align: bottom; }
+    .schedule-table thead tr:last-child th { height: 25px; padding: 1px 3px 5px; color: var(--muted); font-size: .88em; font-weight: 580; vertical-align: top; }
+    .schedule-table tbody tr { height: 35px; }
+    .schedule-table tbody tr.group-start td { border-top: 6px solid var(--canvas); }
+    .identity-cell { overflow: hidden; background: var(--paper); padding: 4px 6px !important; text-align: left !important; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+    .level-cell { background: var(--paper-2); color: var(--muted); font-weight: 750; }
+    .resident-year { display: inline-flex; align-items: center; justify-content: center; min-width: 29px; min-height: 20px; padding: 2px 4px; border: 1px solid currentColor; border-radius: 999px; font-size: 9px; font-weight: 850; letter-spacing: .04em; line-height: 1; }
+    .resident-year-r4 { color: #614aa5; background: #f0ebff; }
+    .resident-year-r3 { color: #0b6a70; background: #e1f2f1; }
+    .resident-year-r2 { color: #9a5a0a; background: #fff2d6; }
+    .resident-year-r1 { color: #9b3d42; background: #fce7e7; }
+    html[data-theme="night"] .resident-year-r4 { color: #c6b7ff; background: #372d59; }
+    html[data-theme="night"] .resident-year-r3 { color: #98dfd9; background: #204b4a; }
+    html[data-theme="night"] .resident-year-r2 { color: #ffd58e; background: #5a411c; }
+    html[data-theme="night"] .resident-year-r1 { color: #ffb7b8; background: #5b3033; }
+    .end-cell { color: var(--muted); font-weight: 650; }
+    .name-input, .level-input {
+      width: 100%;
+      min-height: 26px;
+      border: 1px solid var(--accent);
+      border-radius: 4px;
+      background: var(--paper);
+      color: var(--ink);
+      padding: 3px 5px;
+      font-size: 11px;
+    }
+    .assignment-cell { position: relative; background: var(--paper); }
+    .assignment-cell.is-protected::after {
+      content: "";
+      position: absolute;
+      top: 3px;
+      right: 3px;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: rgba(20, 30, 34, .42);
+    }
+    .assignment-button, .assignment-display {
+      display: grid;
+      place-items: center;
+      width: 100%;
+      min-height: 34px;
+      border: 0;
+      border-radius: 0;
+      background: var(--rotation-fill, transparent);
+      color: var(--rotation-ink, var(--muted));
+      padding: 3px;
+      font-size: inherit;
+      font-weight: 650;
+      line-height: 1.04;
+      overflow-wrap: anywhere;
+    }
+    .assignment-button.is-empty { background: transparent; color: var(--line-strong); font-size: 15px; font-weight: 400; }
+    .assignment-button.is-empty:hover { background: var(--accent-soft); color: var(--accent-strong); }
+    .assignment-button:focus-visible { position: relative; z-index: 2; outline: 2px solid var(--accent); outline-offset: -2px; }
+    .table-note { padding: 8px 12px; background: var(--paper-2); color: var(--muted); font-size: 10px; }
+
+    .card-bar-actions { display: flex; align-items: center; gap: 8px; }
+    #comparisonStatusFilter, #comparisonSortFilter, #specialtyRotationSelect { min-height: 32px; padding-block: 5px; font-size: 11px; }
+    #comparisonStatusFilter { width: 170px; }
+    #comparisonSortFilter { width: 190px; }
+    #specialtyRotationSelect { width: 210px; }
+    .comparison-summary-row { height: 54px !important; }
+    .comparison-summary-row:hover td { background: var(--paper-2); }
+    .comparison-score-cell { padding: 7px 10px !important; text-align: left !important; }
+    .comparison-score {
+      display: grid;
+      grid-template-columns: 70px minmax(120px, 1fr) auto;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      min-height: 38px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--ink);
+      text-align: left;
+    }
+    .comparison-percent { font-size: 22px; font-weight: 800; letter-spacing: -.04em; color: var(--accent-strong); }
+    .comparison-percent.is-perfect { color: var(--success); }
+    .comparison-percent.is-low { color: var(--danger); }
+    .comparison-summary-text strong, .comparison-summary-text small { display: block; }
+    .comparison-summary-text strong { font-size: 11px; }
+    .comparison-summary-text small { margin-top: 2px; color: var(--muted); font-size: 9px; font-weight: 600; }
+    .comparison-score-copy { padding: 5px 8px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: 9px; font-weight: 750; }
+    .comparison-detail-row td { padding: 0 !important; border-bottom-color: var(--line-strong); }
+    .comparison-details { padding: 12px; background: var(--paper-2); text-align: left; }
+    .comparison-details-head { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 9px; }
+    .comparison-details-head strong { font-size: 12px; }
+    .comparison-details-head span { color: var(--muted); font-size: 10px; }
+    .difference-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .difference-card { padding: 9px; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); }
+    .difference-card-head { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 7px; }
+    .difference-card-head strong { font-size: 11px; }
+    .difference-card-head span { color: var(--muted); font-size: 9px; }
+    .difference-values { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .difference-value { min-width: 0; padding: 6px; border: 1px solid var(--choice-border, var(--line)); border-radius: 5px; background: var(--choice-fill, var(--paper-2)); color: var(--choice-ink, var(--muted)); }
+    .difference-value span { display: block; margin-bottom: 2px; font-size: 8px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; opacity: .75; }
+    .difference-value strong { display: block; overflow: hidden; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+    .no-differences { padding: 10px; border: 1px solid #a7ceb8; border-radius: 6px; background: rgba(56, 127, 88, .09); color: var(--success); font-size: 11px; font-weight: 700; }
+
+    .summary-card { margin-top: 12px; border-top: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+    .summary-shell { overflow-x: auto; }
+    .summary-table { width: 100%; min-width: 960px; border-collapse: collapse; font-size: 10px; }
+    .summary-table th, .summary-table td { height: 26px; padding: 4px 6px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); text-align: center; }
+    .summary-table th { background: var(--paper-2); }
+    .summary-table th:first-child, .summary-table td:first-child { width: 170px; text-align: left; }
+    .summary-table tr:last-child td { border-bottom: 0; }
+    .summary-specialty { background: var(--rotation-fill) !important; color: var(--rotation-ink) !important; border-right-color: var(--rotation-border) !important; }
+    .summary-name { display: inline-flex; align-items: center; gap: 7px; font-weight: 720; }
+    .is-zero { color: var(--line-strong); }
+    .summary-count-cell { position: relative; cursor: help; }
+    .count-tooltip { position: absolute; z-index: 20; left: 50%; bottom: calc(100% + 7px); width: 230px; padding: 9px 10px; border-radius: 6px; background: var(--nav); color: var(--nav-ink); box-shadow: 0 10px 28px rgba(10, 28, 33, .24); font-size: 10px; line-height: 1.45; text-align: left; transform: translate(-50%, 4px); opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .12s ease, transform .12s ease; }
+    .count-tooltip strong { display: block; margin-bottom: 3px; color: #a8ded8; font-size: 9px; letter-spacing: .04em; }
+    .summary-count-cell:hover .count-tooltip, .summary-count-cell:focus .count-tooltip { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
+    .summary-count-cell:last-child .count-tooltip { right: 3px; left: auto; transform: translateY(4px); }
+    .summary-count-cell:last-child:hover .count-tooltip, .summary-count-cell:last-child:focus .count-tooltip { transform: translateY(0); }
+    .summary-count-cell.tooltip-start .count-tooltip { left: 3px; right: auto; transform: translateY(4px); }
+    .summary-count-cell.tooltip-start:hover .count-tooltip, .summary-count-cell.tooltip-start:focus .count-tooltip { transform: translateY(0); }
+    .summary-count-cell.tooltip-end .count-tooltip { right: 3px; left: auto; transform: translateY(4px); }
+    .summary-count-cell.tooltip-end:hover .count-tooltip, .summary-count-cell.tooltip-end:focus .count-tooltip { transform: translateY(0); }
+    .summary-count-cell .count-tooltip { display: none; }
+    .summary-hover-card { position: fixed; z-index: 100; width: min(290px, calc(100vw - 24px)); padding: 10px 12px; border: 1px solid rgba(168, 222, 216, .45); border-radius: 8px; background: var(--nav); color: var(--nav-ink); box-shadow: 0 12px 30px rgba(10, 28, 33, .28); font-size: 10px; line-height: 1.45; pointer-events: none; }
+    .summary-hover-card strong { display: block; margin-bottom: 3px; color: #a8ded8; font-size: 9px; letter-spacing: .04em; }
+    .schedule-table.is-specialty { width: 100% !important; min-width: 0 !important; table-layout: fixed; font-size: 11px !important; border-collapse: separate; border-spacing: 0 7px; background: var(--canvas); padding: 8px 10px 10px; }
+    .schedule-table.is-specialty thead th { height: 38px; padding: 8px 10px; border-top: 0; border-bottom: 0; background: var(--nav); color: var(--nav-ink); font-size: 9px; font-weight: 820; letter-spacing: .1em; text-transform: uppercase; }
+    .schedule-table.is-specialty thead th:first-child { border-radius: 7px 0 0 7px; }
+    .schedule-table.is-specialty thead th:last-child { border-radius: 0 7px 7px 0; }
+    .schedule-table.is-specialty tbody tr { height: 66px; box-shadow: 0 3px 10px rgba(21, 50, 55, .045); }
+    .schedule-table.is-specialty tbody td { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--paper); }
+    .schedule-table.is-specialty tbody tr:nth-child(even) td { background: #fbfdfd; }
+    html[data-theme="night"] .schedule-table.is-specialty tbody tr:nth-child(even) td { background: #252f34; }
+    .specialty-block { padding: 12px 14px !important; border-left: 5px solid var(--accent) !important; background: linear-gradient(135deg, var(--accent-soft), var(--paper)) !important; text-align: left !important; }
+    .specialty-block strong, .specialty-block span { display: block; }
+    .specialty-block strong { color: var(--accent-strong); font-size: 12px; letter-spacing: -.01em; }
+    .specialty-block span { margin-top: 4px; color: var(--muted); font-size: 9px; font-weight: 700; }
+    .specialty-roster { padding: 11px 14px !important; text-align: left !important; }
+    .resident-chip { display: inline-flex; align-items: center; gap: 6px; margin: 2px 5px 2px 0; padding: 6px 9px; border: 1px solid var(--line); border-radius: 999px; background: var(--paper-2); box-shadow: inset 0 1px 0 rgba(255,255,255,.7); color: var(--ink); font-weight: 760; }
+    .resident-chip small { display: inline-grid; place-items: center; min-width: 20px; min-height: 16px; padding: 1px 4px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-strong); font-size: 8px; font-weight: 850; }
+    .specialty-empty { color: var(--muted); font-style: italic; }
+    .specialty-count { padding: 10px !important; background: var(--nav) !important; color: var(--nav-ink) !important; font-size: 17px; font-weight: 850; letter-spacing: -.04em; }
+    .specialty-export-group { display: inline-flex; align-items: center; gap: 5px; padding-left: 8px; border-left: 1px solid var(--line); }
+    .specialty-export-group .button { min-height: 32px; padding: 5px 8px; font-size: 10px; }
+    .specialty-export-group .field-select { min-height: 32px; padding: 5px 7px; font-size: 10px; }
+
+    .utility-footer { display: flex; justify-content: flex-end; margin-top: 10px; }
+
+    dialog {
+      width: min(680px, calc(100vw - 30px));
+      max-height: calc(100vh - 40px);
+      padding: 0;
+      border: 1px solid var(--line-strong);
+      border-radius: 10px;
+      background: var(--paper);
+      color: var(--ink);
+      box-shadow: 0 24px 80px rgba(0,0,0,.28);
+    }
+    dialog[open] { display: flex; flex-direction: column; }
+    dialog::backdrop { background: rgba(12, 25, 29, .58); }
+    .dialog-head { padding: 16px 18px 13px; border-bottom: 1px solid var(--line); }
+    .dialog-head h3 { margin: 0; font-size: 18px; letter-spacing: -.02em; }
+    .dialog-head p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+    .dialog-body { flex: 1; min-height: 0; padding: 15px 18px; overflow: auto; }
+    .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--line); background: var(--paper-2); }
+    .dialog-filter { display: grid; grid-template-columns: 1fr 130px; gap: 8px; margin-bottom: 12px; }
+    .chief-entry {
+      display: grid;
+      grid-template-columns: 34px 1fr auto;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      margin-bottom: 12px;
+      padding: 11px;
+      border: 1px solid var(--accent);
+      border-radius: 7px;
+      background: var(--accent-soft);
+      color: var(--ink);
+      text-align: left;
+    }
+    .chief-entry-mark { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 6px; background: var(--nav); color: var(--nav-ink); font-size: 11px; font-weight: 850; }
+    .chief-entry strong, .chief-entry span { display: block; }
+    .chief-entry strong { font-size: 12px; }
+    .chief-entry span { color: var(--muted); font-size: 10px; }
+    .chief-entry em { color: var(--accent-strong); font-size: 10px; font-style: normal; font-weight: 800; }
+    .sign-in-divider { display: flex; align-items: center; gap: 9px; margin: 0 0 12px; color: var(--muted); font-size: 9px; font-weight: 760; letter-spacing: .08em; text-transform: uppercase; }
+    .sign-in-divider::before, .sign-in-divider::after { content: ""; height: 1px; flex: 1; background: var(--line); }
+    .resident-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; max-height: 430px; overflow: auto; }
+    .resident-option {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      min-height: 42px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--paper);
+      text-align: left;
+    }
+    .resident-option:hover { border-color: var(--accent); background: var(--accent-soft); }
+    .resident-option strong { font-size: 12px; }
+    .resident-option span { color: var(--muted); font-size: 11px; }
+    .resident-empty { grid-column: 1 / -1; padding: 28px; color: var(--muted); text-align: center; }
+    .auth-field { display: grid; gap: 6px; }
+    .auth-field span { color: var(--muted); font-size: 10px; font-weight: 760; letter-spacing: .06em; text-transform: uppercase; }
+    .auth-error { min-height: 18px; margin: 7px 0 0; color: var(--danger); font-size: 11px; font-weight: 650; }
+    .chief-scope { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 13px; }
+    .chief-scope div { padding: 9px; border: 1px solid var(--line); border-radius: 6px; background: var(--paper-2); }
+    .chief-scope strong, .chief-scope span { display: block; }
+    .chief-scope strong { font-size: 11px; }
+    .chief-scope span { margin-top: 2px; color: var(--muted); font-size: 9px; }
+
+    .request-list { display: grid; gap: 8px; }
+    .request-row {
+      display: grid;
+      grid-template-columns: 76px minmax(130px, 1fr) minmax(210px, 1.4fr) 100px;
+      align-items: center;
+      gap: 10px;
+      min-height: 54px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+    }
+    .request-row .block-name { font-weight: 760; }
+    .request-row .block-dates { color: var(--muted); font-size: 11px; }
+    .request-choice {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 9px;
+      width: 100%;
+      min-height: 38px;
+      padding: 7px 10px;
+      border: 1px solid var(--choice-border, var(--line-strong));
+      border-radius: 6px;
+      background: var(--choice-fill, var(--paper));
+      color: var(--choice-ink, var(--ink));
+      font-weight: 720;
+      text-align: left;
+    }
+    .request-choice.is-open { border-style: dashed; color: var(--muted); background: var(--paper-2); }
+    .request-choice:disabled { cursor: default; opacity: 1; }
+    .choice-caret { font-size: 10px; opacity: .7; }
+    .request-options {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 7px;
+      padding-top: 9px;
+      border-top: 1px solid var(--line);
+    }
+    .rotation-option {
+      min-height: 42px;
+      padding: 7px 8px;
+      border: 1px solid var(--choice-border, var(--line));
+      border-radius: 6px;
+      background: var(--choice-fill, var(--paper-2));
+      color: var(--choice-ink, var(--ink));
+      font-size: 11px;
+      font-weight: 740;
+      text-align: left;
+    }
+    .rotation-option:hover, .rotation-option[aria-selected="true"] { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .rotation-option.open-option { border-style: dashed; color: var(--muted); }
+    .lock-label { color: var(--muted); font-size: 10px; font-weight: 680; text-align: right; }
+    .lock-label.is-open { color: var(--accent); }
+    .check-row { display: flex; align-items: flex-start; gap: 9px; padding: 11px; border: 1px solid var(--line); border-radius: 6px; background: var(--paper-2); }
+    .check-row input { margin-top: 3px; }
+    .check-row span { font-size: 12px; }
+
+    .toast-region { position: fixed; right: 18px; bottom: 18px; z-index: 20; display: grid; gap: 7px; }
+    .toast { min-width: 260px; max-width: 380px; padding: 10px 12px; border: 1px solid var(--line-strong); border-left: 4px solid var(--accent); border-radius: 6px; background: var(--paper); color: var(--ink); box-shadow: var(--shadow); font-size: 12px; }
+    .toast.warn { border-left-color: var(--warning); }
+    .toast.success { border-left-color: var(--success); }
+
+    @media (max-width: 1180px) {
+      .masthead { grid-template-columns: 1fr; gap: 12px; }
+      .header-command { grid-template-columns: auto 1fr; border-top: 1px solid var(--line); padding-top: 10px; }
+      .cycle-brief { border-left: 0; padding-left: 0; }
+      .mast-actions { grid-template-columns: auto auto auto; justify-content: end; }
+      .saved-indicator { text-align: left; }
+      .toolbar { align-items: flex-start; }
+      .toolbar-actions { flex-wrap: wrap; justify-content: flex-end; }
+      .schedule-table col.resident-col { width: 70px; }
+      .schedule-table col.end-resident-col { width: 58px; }
+      .schedule-table col.level-col, .schedule-table col.end-level-col { width: 36px; }
+    }
+
+    @media (max-width: 720px) {
+      body { font-size: 13px; }
+      .app-shell { width: 100%; margin: 0; }
+      .masthead { gap: 13px; padding: 15px 14px 13px; border-left: 0; border-right: 0; border-radius: 0; }
+      .identity { align-items: flex-start; }
+      .brand-mark { width: 36px; height: 36px; flex-basis: 36px; font-size: 15px; }
+      .eyebrow { font-size: 8px; letter-spacing: .09em; }
+      h1 { font-size: 20px; }
+      .title-subline { font-size: 10px; }
+      .header-command { grid-template-columns: 1fr; gap: 10px; }
+      .cycle-brief { display: grid; grid-template-columns: auto auto 1fr; align-items: baseline; gap: 8px; border-right: 0; padding: 0; }
+      .cycle-brief strong { font-size: 15px; }
+      .cycle-brief small { text-align: right; }
+      .mast-actions { width: 100%; grid-template-columns: 1fr 1fr; }
+      .theme-control, .theme-select, .account-button, .chief-access-button { width: 100%; max-width: none; }
+      .chief-access-button { grid-column: 1 / -1; }
+      .view-tabs { padding: 0 4px; overflow-x: auto; border-radius: 0; scrollbar-width: none; }
+      .view-tab { min-width: max-content; min-height: 44px; padding: 0 13px; font-size: 12px; }
+      .role-state { display: none; }
+      .workspace { margin-top: 8px; }
+      .context-strip { grid-template-columns: 1fr; gap: 10px; padding: 12px; border-left: 0; border-right: 0; border-radius: 0; }
+      .context-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
+      .metric { min-width: 0; padding-left: 8px; }
+      .metric:first-child { border-left: 0; padding-left: 0; }
+      .metric strong { font-size: 15px; }
+      .metric span { font-size: 7px; }
+      .toolbar { display: grid; padding: 9px; border-left: 0; border-right: 0; }
+      .filters { display: grid; grid-template-columns: 1fr 110px; width: 100%; }
+      .search-input, .level-filter { width: 100%; }
+      .toolbar-actions { justify-content: flex-start; width: 100%; }
+      .toolbar-divider { display: none; }
+      .toolbar-actions .button { flex: 1 1 auto; }
+      .zoom-control .button { flex: 0 0 auto; }
+      .rotation-panel, .schedule-card { border-left: 0; border-right: 0; }
+      .card-bar { align-items: flex-start; padding: 10px; }
+      .card-bar-actions { flex-wrap: wrap; justify-content: flex-end; }
+      .schedule-table { min-width: 1040px !important; width: 1040px !important; font-size: 9px !important; }
+      .schedule-table.is-comparison { min-width: 0 !important; width: 100% !important; font-size: 10px !important; }
+      .comparison-summary-row { height: 58px !important; }
+      .comparison-score { grid-template-columns: 58px minmax(90px, 1fr) auto; gap: 8px; }
+      .comparison-percent { font-size: 19px; }
+      .difference-grid { grid-template-columns: 1fr; }
+      .summary-card { margin-top: 8px; border-left: 0; border-right: 0; border-radius: 0; box-shadow: none; }
+      .utility-footer { padding: 0 10px 14px; }
+      dialog { width: 100vw; max-width: none; height: 100dvh; max-height: none; margin: 0; border: 0; border-radius: 0; }
+      .dialog-head { padding: 14px 13px 12px; }
+      .dialog-body { padding: 11px; }
+      .dialog-actions { position: sticky; bottom: 0; padding: 10px 11px; }
+      .dialog-filter { grid-template-columns: 1fr 105px; }
+      .resident-list { grid-template-columns: 1fr; max-height: none; }
+      .request-row { grid-template-columns: 1fr auto; gap: 7px 10px; padding: 10px; }
+      .request-row .block-name { grid-column: 1; }
+      .request-row .block-dates { grid-column: 2; text-align: right; }
+      .request-choice { grid-column: 1 / -1; min-height: 44px; }
+      .lock-label { grid-column: 1 / -1; text-align: left; }
+      .request-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .rotation-option { min-height: 46px; }
+      .toast-region { left: 10px; right: 10px; bottom: 10px; }
+      .toast { min-width: 0; width: 100%; }
+    }
+
+    @media print {
+      body { min-width: 0; background: #fff; color: #111; }
+      .app-shell { width: 100%; margin: 0; }
+      .mast-actions, .view-tabs, .toolbar, .rotation-panel, .table-note, .utility-footer { display: none !important; }
+      .masthead { border: 0; border-bottom: 2px solid #222; border-radius: 0; padding: 10px 0; }
+      .workspace { margin: 8px 0 0; }
+      .context-strip { border-radius: 0; }
+      .schedule-table { width: 100% !important; min-width: 0 !important; font-size: 6px !important; }
+      .schedule-table col.resident-col { width: 7%; }
+      .schedule-table col.level-col, .schedule-table col.end-level-col { width: 3%; }
+      .schedule-table col.end-resident-col { width: 6%; }
+      .assignment-button, .assignment-display { min-height: 25px; }
+      .summary-card { box-shadow: none; break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="masthead">
+      <div class="identity">
+        <div class="brand-mark" aria-hidden="true">J</div>
+        <div>
+          <div class="eyebrow">JHAH · Residency Operations · Academic year 2026–2027</div>
+          <h1>JHAH Resident Block Distribution, 2027</h1>
+          <p class="title-subline">Resident requests, chief assignments, and variance review in one protected workspace.</p>
+        </div>
+      </div>
+      <div class="header-command">
+        <div class="cycle-brief" aria-label="Academic rotation cycle">
+          <span>Academic rotation cycle</span>
+          <strong>2026–2027</strong>
+          <small>38 residents · 13 four-week blocks</small>
+        </div>
+        <div class="mast-actions">
+          <span id="saveState" class="saved-indicator">Reference baseline</span>
+          <label class="theme-control">
+            <span class="control-label">Theme</span>
+            <select id="themeSelect" class="field-select theme-select" aria-label="Color theme">
+              <option value="day">Day Shift</option>
+              <option value="night">Night Shift</option>
+            </select>
+          </label>
+          <button id="accountBtn" class="button account-button" type="button">Resident sign in</button>
+          <button id="chiefAccessBtn" class="button chief-access-button" type="button">Chief access</button>
+          <button id="changeChiefPasswordBtn" class="button" type="button" hidden>Change password</button>
+        </div>
+      </div>
+    </header>
+
+    <nav class="view-tabs" role="tablist" aria-label="Schedule versions">
+      <button class="view-tab" type="button" role="tab" aria-selected="true" data-view="requested">Requested</button>
+      <button class="view-tab is-locked" type="button" role="tab" aria-selected="false" aria-disabled="true" data-view="actual">Final Done by the Chief <span class="tab-lock">Chief</span></button>
+      <button class="view-tab is-locked" type="button" role="tab" aria-selected="false" aria-disabled="true" data-view="comparison">Request vs. Actual <span class="tab-lock">Chief</span></button>
+      <button class="view-tab is-locked" type="button" role="tab" aria-selected="false" aria-disabled="true" data-view="specialty">Specialty Resident <span class="tab-lock">Chief</span></button>
+      <span id="roleState" class="role-state">Public schedule view</span>
+    </nav>
+
+    <section class="workspace">
+      <div class="context-strip">
+        <div>
+          <h2 id="viewTitle">Requested schedule</h2>
+          <p id="viewDescription">Residents submit requests from a simple block list. Chief-set baseline blocks remain protected.</p>
+        </div>
+        <div id="contextMetrics" class="context-metrics" aria-label="Schedule overview"></div>
+      </div>
+
+      <section class="toolbar" aria-label="Schedule controls">
+        <div class="filters">
+          <label>
+            <span class="sr-only">Find a resident</span>
+            <input id="searchInput" class="field-input search-input" type="search" placeholder="Find a resident" autocomplete="off" />
+          </label>
+          <label>
+            <span class="sr-only">Filter by year</span>
+            <select id="levelFilter" class="field-select level-filter">
+              <option value="all">All years</option>
+              <option value="R4">R4</option>
+              <option value="R3">R3</option>
+              <option value="R2">R2</option>
+              <option value="R1">R1</option>
+            </select>
+          </label>
+        </div>
+        <div class="toolbar-actions">
+          <div id="zoomControl" class="zoom-control" aria-label="Schedule zoom">
+            <button id="zoomOutBtn" class="button" type="button" aria-label="Zoom out">−</button>
+            <button id="zoomFitBtn" class="button zoom-label" type="button" title="Fit all 13 blocks">Fit 13</button>
+            <button id="zoomInBtn" class="button" type="button" aria-label="Zoom in">+</button>
+          </div>
+          <span class="toolbar-divider" aria-hidden="true"></span>
+          <button id="undoBtn" class="button chief-action" type="button" disabled>Undo</button>
+          <button id="redoBtn" class="button chief-action" type="button" disabled>Redo</button>
+          <button id="editCheckBtn" class="button chief-action" type="button">Check to edit</button>
+          <button id="editRequestsBtn" class="button resident-action" type="button">Edit my requests</button>
+          <button id="exportBtn" class="button" type="button">Export requested Excel</button>
+          <button id="saveBtn" class="button primary" type="button">Save changes</button>
+        </div>
+      </section>
+
+      <section id="rotationPanel" class="rotation-panel" hidden aria-labelledby="rotationHeading">
+        <div class="rotation-heading">
+          <strong id="rotationHeading">Chief rotation tray</strong>
+          <span id="selectionText">Choose or drag a rotation into an open block. The tray never runs out.</span>
+        </div>
+        <div id="palette" class="palette" role="list" aria-label="Available rotations"></div>
+      </section>
+
+      <section class="schedule-card" aria-labelledby="scheduleHeading">
+        <div class="card-bar">
+          <div>
+            <h3 id="scheduleHeading">Master block schedule · Requested</h3>
+            <p id="visibleStatus">Showing all 38 residents · all 13 blocks fit by default</p>
+          </div>
+          <div class="card-bar-actions">
+            <label id="comparisonFilterWrap" hidden>
+              <span class="sr-only">Filter comparison status</span>
+              <select id="comparisonStatusFilter" class="field-select" aria-label="Filter comparison status">
+                <option value="all">All eligible residents</option>
+                <option value="needs-review">Needs review</option>
+                <option value="exact">Exact matches</option>
+              </select>
+            </label>
+            <label id="comparisonSortWrap" hidden>
+              <span class="sr-only">Sort comparison</span>
+              <select id="comparisonSortFilter" class="field-select" aria-label="Sort comparison">
+                <option value="review-asc">Review % · low to high</option>
+                <option value="review-desc">Review % · high to low</option>
+                <option value="year-desc">Year · R4 to R2</option>
+                <option value="year-asc">Year · R2 to R4</option>
+                <option value="name">Name · A to Z</option>
+              </select>
+            </label>
+            <label id="specialtySelectorWrap" hidden>
+              <span class="sr-only">Select specialty rotation</span>
+              <select id="specialtyRotationSelect" class="field-select" aria-label="Select specialty rotation"></select>
+            </label>
+            <div id="specialtyExportWrap" class="specialty-export-group" hidden>
+              <button id="exportSpecialtyExcel" class="button" type="button">Specialty Excel</button>
+              <button id="exportSpecialtyPdf" class="button" type="button">Specialty PDF</button>
+              <button id="exportAllSpecialtiesExcel" class="button" type="button">All Specialties Excel</button>
+              <button id="exportAllSpecialtiesPdf" class="button" type="button">All Specialties PDF</button>
+            </div>
+            <button id="comparisonToggleAll" class="button" type="button" hidden>Show all details</button>
+            <span id="modePill" class="mode-pill">Resident list editing</span>
+          </div>
+        </div>
+        <div id="scheduleShell" class="table-shell" tabindex="0" aria-label="Resident rotation schedule">
+          <table id="scheduleTable" class="schedule-table">
+            <colgroup>
+              <col class="resident-col" />
+              <col class="level-col" />
+              <col class="block-col" span="13" />
+              <col class="end-level-col" />
+              <col class="end-resident-col" />
+            </colgroup>
+            <thead id="scheduleHead"></thead>
+            <tbody id="scheduleBody"></tbody>
+          </table>
+        </div>
+        <div id="tableNote" class="table-note">Requested blocks are read-only here. Sign in, select your profile, and use the 13-block list to edit only your own requests.</div>
+      </section>
+    </section>
+
+    <section id="summaryCard" class="summary-card" aria-labelledby="summaryHeading">
+      <div class="card-bar">
+        <div>
+          <h3 id="summaryHeading">Requested residents per block</h3>
+          <p>Counts update as resident requests are saved.</p>
+        </div>
+      </div>
+      <div class="summary-shell">
+        <table class="summary-table">
+          <thead id="summaryHead"></thead>
+          <tbody id="summaryBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="utility-footer">
+      <button id="resetBtn" class="button danger" type="button">Restore image baseline</button>
+    </div>
+  </main>
+
+  <dialog id="residentDialog" aria-labelledby="residentDialogTitle">
+    <div class="dialog-head">
+      <h3 id="residentDialogTitle">Select your resident profile</h3>
+      <p>No password or confirmation is required. Find yourself by name or training year.</p>
+    </div>
+    <div class="dialog-body">
+      <button id="residentChiefEntry" class="chief-entry" type="button">
+        <span class="chief-entry-mark">CH</span>
+        <span><strong>Sign in as the Chief</strong><span>Manage the final schedule and comparison review.</span></span>
+        <em>Password protected</em>
+      </button>
+      <div class="sign-in-divider">Or select a resident</div>
+      <div class="dialog-filter">
+        <input id="residentSearch" class="field-input" type="search" placeholder="Search name" autocomplete="off" />
+        <select id="residentLevel" class="field-select" aria-label="Training year">
+          <option value="all">All years</option>
+          <option value="R4">R4</option>
+          <option value="R3">R3</option>
+          <option value="R2">R2</option>
+        </select>
+      </div>
+      <div id="residentList" class="resident-list"></div>
+    </div>
+    <div class="dialog-actions">
+      <button id="signOutBtn" class="button danger" type="button" hidden>Sign out</button>
+      <button class="button" type="button" data-close-dialog="residentDialog">Cancel</button>
+    </div>
+  </dialog>
+
+  <dialog id="chiefDialog" aria-labelledby="chiefDialogTitle">
+    <form id="chiefForm">
+      <div class="dialog-head">
+        <h3 id="chiefDialogTitle">Chief access</h3>
+        <p>Password-protected access to the final schedule, comparison review, and specialty rosters.</p>
+      </div>
+      <div class="dialog-body">
+        <label class="auth-field">
+          <span>Chief password</span>
+          <input id="chiefPassword" class="field-input" type="password" autocomplete="current-password" placeholder="Enter password" />
+        </label>
+        <p id="chiefError" class="auth-error" role="alert"></p>
+        <div class="chief-scope" aria-label="Chief access includes">
+          <div><strong>Final Done by the Chief</strong><span>Manage assignments and protected baseline changes.</span></div>
+          <div><strong>Request vs. Actual</strong><span>Review resident agreement percentages and differences.</span></div>
+          <div><strong>Specialty Resident</strong><span>Share final block-by-block rosters with rotation departments.</span></div>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <button class="button" type="button" data-close-dialog="chiefDialog">Cancel</button>
+        <button id="confirmChiefBtn" class="button primary" type="submit">Sign in as Chief</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="changeChiefPasswordDialog" aria-labelledby="changeChiefPasswordTitle">
+    <form id="changeChiefPasswordForm">
+      <div class="dialog-head">
+        <h3 id="changeChiefPasswordTitle">Change chief password</h3>
+        <p>Confirm the current chief password, then set a new password on this device.</p>
+      </div>
+      <div class="dialog-body">
+        <label class="auth-field"><span>Current chief password</span><input id="currentChiefPassword" class="field-input" type="password" autocomplete="current-password" /></label>
+        <label class="auth-field"><span>New chief password</span><input id="newChiefPassword" class="field-input" type="password" minlength="8" autocomplete="new-password" /></label>
+        <label class="auth-field"><span>Confirm new password</span><input id="confirmChiefPassword" class="field-input" type="password" minlength="8" autocomplete="new-password" /></label>
+        <p id="changeChiefPasswordError" class="auth-error" role="alert"></p>
+      </div>
+      <div class="dialog-actions"><button class="button" type="button" data-close-dialog="changeChiefPasswordDialog">Cancel</button><button class="button primary" type="submit">Update password</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="requestDialog" aria-labelledby="requestDialogTitle">
+    <div class="dialog-head">
+      <h3 id="requestDialogTitle">Edit my requests</h3>
+      <p id="requestDialogSubtitle">Choose one requested rotation for each open block.</p>
+    </div>
+    <div class="dialog-body">
+      <div id="requestList" class="request-list"></div>
+    </div>
+    <div class="dialog-actions">
+      <button class="button" type="button" data-close-dialog="requestDialog">Cancel</button>
+      <button id="saveRequestsBtn" class="button primary" type="button">Save my requests</button>
+    </div>
+  </dialog>
+
+  <dialog id="unlockDialog" aria-labelledby="unlockTitle">
+    <div class="dialog-head">
+      <h3 id="unlockTitle">Unlock fundamental schedule data?</h3>
+      <p>This permits the chief to change resident names, levels, and rotations already filled in the supplied reference.</p>
+    </div>
+    <div class="dialog-body">
+      <label class="check-row">
+        <input id="unlockCheck" type="checkbox" />
+        <span>I checked the baseline and understand that these edits change protected schedule data.</span>
+      </label>
+    </div>
+    <div class="dialog-actions">
+      <button class="button" type="button" data-close-dialog="unlockDialog">Cancel</button>
+      <button id="confirmUnlockBtn" class="button primary" type="button" disabled>Unlock fundamentals</button>
+    </div>
+  </dialog>
+
+  <div id="toastRegion" class="toast-region" aria-live="polite" aria-atomic="true"></div>
+  <div id="summaryHoverCard" class="summary-hover-card" hidden></div>
+
+  <script>
+    const BLOCKS = [
+      ["Block 1", "Sept 28–Oct 25"],
+      ["Block 2", "Oct 26–Nov 22"],
+      ["Block 3", "Nov 23–Dec 20"],
+      ["Block 4", "Dec 21–Jan 17"],
+      ["Block 5", "Jan 18–Feb 14"],
+      ["Block 6", "Feb 15–Mar 14"],
+      ["Block 7", "Mar 15–Apr 11"],
+      ["Block 8", "Apr 12–May 9"],
+      ["Block 9", "May 10–Jun 6"],
+      ["Block 10", "Jun 7–Jul 4"],
+      ["Block 11", "Jul 5–Aug 1"],
+      ["Block 12", "Aug 2–Aug 29"],
+      ["Block 13", "Aug 30–Sept 26"],
+    ];
+
+    const ROTATIONS = [
+      { name: "Internal Medicine", short: "IM", fill: "#f3ead1", border: "#dccb9b", ink: "#4b4532" },
+      { name: "Night Float", short: "NF", fill: "#183b73", border: "#102b57", ink: "#ffffff" },
+      { name: "Stepdown", short: "Step", fill: "#d5dde0", border: "#b7c4c8", ink: "#33464d" },
+      { name: "Cardiology", short: "Card", fill: "#f5b0c5", border: "#db829e", ink: "#5b2540" },
+      { name: "Nephrology", short: "Neph", fill: "#d5c7ea", border: "#b49bd6", ink: "#44345f" },
+      { name: "Gastroenterology", short: "GI", fill: "#f2c3ad", border: "#d89d83", ink: "#5e3425" },
+      { name: "Pulmonology", short: "Pulm", fill: "#bde4ed", border: "#86c8d7", ink: "#244c56" },
+      { name: "Infectious Disease", short: "ID", fill: "#c7dfa9", border: "#9cbd73", ink: "#314b20" },
+      { name: "Neurology", short: "Neuro", fill: "#493d6b", border: "#342a51", ink: "#ffffff" },
+      { name: "ER", short: "ER", fill: "#d93434", border: "#b91e1e", ink: "#ffffff" },
+      { name: "Elective", short: "Elec", fill: "#252840", border: "#171a2e", ink: "#ffffff" },
+      { name: "ICU", short: "ICU", fill: "#d27ac2", border: "#b653a4", ink: "#ffffff" },
+      { name: "Rheumatology", short: "Rheum", fill: "#e2c6b0", border: "#c29c7f", ink: "#563b2c" },
+      { name: "Hematology", short: "Heme", fill: "#a5393f", border: "#81272c", ink: "#ffffff" },
+      { name: "Endocrinology", short: "Endo", fill: "#9ccfc7", border: "#6cac9f", ink: "#23483f" },
+      { name: "Oncology", short: "Onc", fill: "#bcc5d4", border: "#929fb2", ink: "#344154" },
+    ];
+
+    const THEMES = {
+      day: { label: "Day Shift", header: "153D46", soft: "E1F0EF", darkInk: "17353C" },
+      night: { label: "Night Shift", header: "0F262D", soft: "DCE9E8", darkInk: "203337" },
+    };
+
+    const IM = "Internal Medicine";
+    const NF = "Night Float";
+    const blank13 = () => Array(13).fill(null);
+    const row = (id, name, level, endLevel, entries) => ({ id, name, level, endLevel, assignments: [...entries, ...blank13()].slice(0, 13) });
+
+    const BASELINE = [
+      row("r4-adel", "Adel", "R4", "R3", [IM, IM, "Stepdown"]),
+      row("r4-farah", "Farah", "R4", "R3", [IM, IM, null, "Stepdown"]),
+      row("r4-omar-so", "Omar So", "R4", "R3", [IM, IM, null, null, "Stepdown"]),
+      row("r4-rakan", "Rakan", "R4", "R3", [IM, IM, null, null, null, "Stepdown"]),
+
+      row("r3-abdulaziz", "Abdulaziz", "R3", "R2", [NF, null, IM, null, IM, null, null, null, null, null, IM]),
+      row("r3-aeshah", "Aeshah", "R3", "R2", [NF, null, IM, null, IM, null, null, null, null, null, IM]),
+      row("r3-ahmed", "Ahmed", "R3", "R2", [null, NF, IM, null, IM, null, null, null, null, null, IM]),
+      row("r3-danah", "Danah", "R3", "R2", [null, null, IM, NF, IM, null, null, null, null, null, IM]),
+      row("r3-ghofran", "Ghofran", "R3", "R2", [null, null, IM, NF, IM, null, null, null, null, null, IM]),
+      row("r3-hassan-m", "Hassan M", "R3", "R2", [null, null, NF, IM, null, null, null, null, null, null, null, IM, IM]),
+      row("r3-maali", "Maali", "R3", "R2", [null, null, NF, IM, null, null, null, null, null, null, null, IM, IM]),
+      row("r3-mai", "Mai", "R3", "R2", [null, null, null, IM, NF, null, null, null, null, null, null, IM, IM]),
+      row("r3-rima", "Rima", "R3", "R2", [null, null, null, IM, NF, null, null, null, null, null, null, IM, IM]),
+      row("r3-samar", "Samar", "R3", "R2", [null, NF, null, IM, null, null, null, null, null, null, null, IM, IM]),
+
+      row("r2-asim", "Asim", "R2", "R1", [null, null, null, null, IM, IM, IM, NF]),
+      row("r2-dalyel", "Dalyel", "R2", "R1", [null, null, null, null, IM, IM, IM, NF]),
+      row("r2-faleh", "Faleh", "R2", "R1", [null, null, null, null, IM, IM, IM, null, NF]),
+      row("r2-hassan-s", "Hassan S", "R2", "R1", [null, null, null, null, IM, IM, IM, null, NF]),
+      row("r2-hawra", "Hawra", "R2", "R1", [null, null, null, null, IM, IM, IM, null, null, NF]),
+      row("r2-jori", "Jori", "R2", "R1", [null, null, null, null, IM, IM, IM, null, null, NF]),
+      row("r2-khalid", "Khalid", "R2", "R1", [null, null, null, null, IM, IM, IM, null, null, null, NF]),
+      row("r2-lama-k", "Lama K", "R2", "R1", [null, null, null, null, null, NF, null, IM, IM, IM]),
+      row("r2-mahdi", "Mahdi", "R2", "R1", [null, null, null, null, null, NF, null, IM, IM, IM]),
+      row("r2-mohammed", "Mohammed", "R2", "R1", [null, null, null, null, null, null, NF, IM, IM, IM]),
+      row("r2-narjis", "Narjis", "R2", "R1", [null, null, null, null, null, null, NF, IM, IM, IM]),
+      row("r2-nasser", "Nasser", "R2", "R1", [null, null, null, null, null, null, null, IM, IM, IM, NF]),
+      row("r2-omar-sh", "Omar Sh", "R2", "R1", [null, null, null, null, null, null, null, IM, IM, IM, null, NF]),
+      row("r2-walaa", "Walaa", "R2", "R1", [null, null, null, null, null, null, null, IM, IM, IM, null, NF]),
+
+      row("r1-1", "R1-1", "R1", "R1", [IM, IM, IM, "Cardiology", "Nephrology", "Gastroenterology", "Pulmonology", NF, "Neurology", "ER", "Infectious Disease", "Elective", "ICU"]),
+      row("r1-2", "R1-2", "R1", "R1", [IM, IM, IM, "Cardiology", "Nephrology", "Gastroenterology", "Pulmonology", "Infectious Disease", "ICU", "Elective", NF, "ER", "Neurology"]),
+      row("r1-3", "R1-3", "R1", "R1", [IM, IM, IM, "Infectious Disease", "Cardiology", "Nephrology", "Gastroenterology", "Pulmonology", "ICU", "Neurology", "Elective", NF, "ER"]),
+      row("r1-4", "R1-4", "R1", "R1", [IM, IM, IM, "Infectious Disease", "Cardiology", "Nephrology", "Gastroenterology", "Pulmonology", "ER", "Neurology", "ICU", "Elective", NF]),
+      row("r1-5", "R1-5", "R1", "R1", [IM, IM, IM, "Pulmonology", NF, "Cardiology", "Nephrology", "Gastroenterology", "Elective", "Infectious Disease", "Neurology", "ER", "ICU"]),
+      row("r1-6", "R1-6", "R1", "R1", [IM, IM, "Pulmonology", IM, "Infectious Disease", "Cardiology", "Nephrology", "Gastroenterology", "ER", "ICU", "Neurology", "Elective", NF]),
+      row("r1-7", "R1-7", "R1", "R1", [IM, IM, "Gastroenterology", IM, "Pulmonology", NF, "Cardiology", "Nephrology", "Elective", "ICU", "ER", "Neurology", "Infectious Disease"]),
+      row("r1-8", "R1-8", "R1", "R1", [IM, IM, "Gastroenterology", IM, "Pulmonology", "Infectious Disease", "Cardiology", "Nephrology", NF, "Elective", "ICU", "Neurology", "ER"]),
+      row("r1-9", "R1-9", "R1", "R1", [IM, IM, "Nephrology", IM, "Gastroenterology", "Pulmonology", NF, "Cardiology", "Infectious Disease", "Elective", "ER", "ICU", "Neurology"]),
+      row("r1-10", "R1-10", "R1", "R1", [IM, IM, "Nephrology", IM, "Gastroenterology", "Pulmonology", "Infectious Disease", "Cardiology", "Neurology", "ER", "Elective", "ICU", NF]),
+    ];
+
+    const STORAGE_KEY = "jhah-resident-block-distribution-2027-v2";
+    const LEGACY_KEY = "jhah-resident-block-distribution-2027-v1";
+    const fundamentalCells = new Set();
+    BASELINE.forEach(person => person.assignments.forEach((value, index) => {
+      if (value) fundamentalCells.add(`${person.id}:${index}`);
+    }));
+
+    const cloneResidents = source => source.map(person => ({ ...person, assignments: [...person.assignments] }));
+    const escapeHtml = value => String(value ?? "").replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char]);
+    const rotationByName = name => ROTATIONS.find(rotation => rotation.name === name);
+    const rotationLabel = value => value || "";
+    const personIndexById = (collection, id) => collection.findIndex(person => person.id === id);
+    const normalizedPeople = source => BASELINE.map((base, index) => {
+      const candidate = source?.find?.(person => person.id === base.id) || source?.[index] || base;
+      return {
+        ...base,
+        ...candidate,
+        id: base.id,
+        assignments: [...(candidate.assignments || base.assignments), ...blank13()].slice(0, 13),
+      };
+    });
+
+    const CHIEF_PASSWORD_STORAGE_KEY = "jhah-chief-password-2027";
+    const DEFAULT_CHIEF_PASSWORD = "2027";
+    const CHIEF_BYPASS = "AhmeDistheBest";
+    const getChiefPassword = () => localStorage.getItem(CHIEF_PASSWORD_STORAGE_KEY) || DEFAULT_CHIEF_PASSWORD;
+
+    let requestedResidents = cloneResidents(BASELINE);
+    let actualResidents = cloneResidents(BASELINE);
+    let requestMeta = {};
+    let activeView = "requested";
+    let selectedRotation = null;
+    let fundamentalsUnlocked = false;
+    let signedResidentId = null;
+    let chiefSignedIn = false;
+    let pendingChiefView = null;
+    let requestDraft = null;
+    let dirty = false;
+    let zoomPercent = 100;
+    let expandedComparisons = new Set();
+    let allComparisonExpanded = false;
+    let undoStack = [];
+    let redoStack = [];
+
+    const els = {
+      theme: document.getElementById("themeSelect"),
+      saveState: document.getElementById("saveState"),
+      account: document.getElementById("accountBtn"),
+      chiefAccess: document.getElementById("chiefAccessBtn"),
+      changeChiefPassword: document.getElementById("changeChiefPasswordBtn"),
+      roleState: document.getElementById("roleState"),
+      viewTitle: document.getElementById("viewTitle"),
+      viewDescription: document.getElementById("viewDescription"),
+      metrics: document.getElementById("contextMetrics"),
+      search: document.getElementById("searchInput"),
+      level: document.getElementById("levelFilter"),
+      zoomOut: document.getElementById("zoomOutBtn"),
+      zoomFit: document.getElementById("zoomFitBtn"),
+      zoomIn: document.getElementById("zoomInBtn"),
+      zoomControl: document.getElementById("zoomControl"),
+      undo: document.getElementById("undoBtn"),
+      redo: document.getElementById("redoBtn"),
+      editCheck: document.getElementById("editCheckBtn"),
+      editRequests: document.getElementById("editRequestsBtn"),
+      exportButton: document.getElementById("exportBtn"),
+      saveButton: document.getElementById("saveBtn"),
+      rotationPanel: document.getElementById("rotationPanel"),
+      palette: document.getElementById("palette"),
+      selection: document.getElementById("selectionText"),
+      scheduleHeading: document.getElementById("scheduleHeading"),
+      visibleStatus: document.getElementById("visibleStatus"),
+      modePill: document.getElementById("modePill"),
+      comparisonToggleAll: document.getElementById("comparisonToggleAll"),
+      comparisonFilterWrap: document.getElementById("comparisonFilterWrap"),
+      comparisonStatus: document.getElementById("comparisonStatusFilter"),
+      comparisonSortWrap: document.getElementById("comparisonSortWrap"),
+      comparisonSort: document.getElementById("comparisonSortFilter"),
+      specialtySelectorWrap: document.getElementById("specialtySelectorWrap"),
+      specialtyRotation: document.getElementById("specialtyRotationSelect"),
+      specialtyExportWrap: document.getElementById("specialtyExportWrap"),
+      exportSpecialtyExcel: document.getElementById("exportSpecialtyExcel"),
+      exportSpecialtyPdf: document.getElementById("exportSpecialtyPdf"),
+      exportAllSpecialtiesExcel: document.getElementById("exportAllSpecialtiesExcel"),
+      exportAllSpecialtiesPdf: document.getElementById("exportAllSpecialtiesPdf"),
+      table: document.getElementById("scheduleTable"),
+      shell: document.getElementById("scheduleShell"),
+      head: document.getElementById("scheduleHead"),
+      body: document.getElementById("scheduleBody"),
+      tableNote: document.getElementById("tableNote"),
+      summaryCard: document.getElementById("summaryCard"),
+      summaryHeading: document.getElementById("summaryHeading"),
+      summaryHead: document.getElementById("summaryHead"),
+      summaryBody: document.getElementById("summaryBody"),
+      reset: document.getElementById("resetBtn"),
+      residentDialog: document.getElementById("residentDialog"),
+      residentSearch: document.getElementById("residentSearch"),
+      residentLevel: document.getElementById("residentLevel"),
+      residentList: document.getElementById("residentList"),
+      signOut: document.getElementById("signOutBtn"),
+      residentChiefEntry: document.getElementById("residentChiefEntry"),
+      chiefDialog: document.getElementById("chiefDialog"),
+      chiefForm: document.getElementById("chiefForm"),
+      chiefPassword: document.getElementById("chiefPassword"),
+      chiefError: document.getElementById("chiefError"),
+      changeChiefPasswordDialog: document.getElementById("changeChiefPasswordDialog"),
+      changeChiefPasswordForm: document.getElementById("changeChiefPasswordForm"),
+      currentChiefPassword: document.getElementById("currentChiefPassword"),
+      newChiefPassword: document.getElementById("newChiefPassword"),
+      confirmChiefPassword: document.getElementById("confirmChiefPassword"),
+      changeChiefPasswordError: document.getElementById("changeChiefPasswordError"),
+      requestDialog: document.getElementById("requestDialog"),
+      requestTitle: document.getElementById("requestDialogTitle"),
+      requestSubtitle: document.getElementById("requestDialogSubtitle"),
+      requestList: document.getElementById("requestList"),
+      saveRequests: document.getElementById("saveRequestsBtn"),
+      unlockDialog: document.getElementById("unlockDialog"),
+      unlockCheck: document.getElementById("unlockCheck"),
+      confirmUnlock: document.getElementById("confirmUnlockBtn"),
+      toastRegion: document.getElementById("toastRegion"),
+      summaryHoverCard: document.getElementById("summaryHoverCard"),
+    };
+
+    function toast(message, type = "") {
+      const item = document.createElement("div");
+      item.className = `toast ${type}`.trim();
+      item.textContent = message;
+      els.toastRegion.appendChild(item);
+      setTimeout(() => item.remove(), 3400);
+    }
+
+    function setSavedLabel(text, state = "") {
+      els.saveState.textContent = text;
+      els.saveState.className = `saved-indicator ${state}`.trim();
+    }
+
+    function markDirty() {
+      dirty = true;
+      setSavedLabel("Unsaved changes", "is-dirty");
+    }
+
+    function serializeState(savedAt = new Date().toISOString()) {
+      return { version: 2, savedAt, requestedResidents, actualResidents, requestMeta, theme: els.theme.value };
+    }
+
+    function loadSaved() {
+      try {
+        const current = localStorage.getItem(STORAGE_KEY);
+        if (current) {
+          const parsed = JSON.parse(current);
+          requestedResidents = normalizedPeople(parsed.requestedResidents);
+          actualResidents = normalizedPeople(parsed.actualResidents);
+          requestMeta = parsed.requestMeta && typeof parsed.requestMeta === "object" ? parsed.requestMeta : {};
+          els.theme.value = THEMES[parsed.theme] ? parsed.theme : "day";
+          if (parsed.savedAt) setSavedLabel(`Saved ${formatTimestamp(parsed.savedAt)}`, "is-saved");
+          return;
+        }
+        const legacy = localStorage.getItem(LEGACY_KEY);
+        if (legacy) {
+          const parsed = JSON.parse(legacy);
+          actualResidents = normalizedPeople(parsed.residents);
+          requestedResidents = cloneResidents(BASELINE);
+          markDirty();
+          toast("Previous schedule loaded into the chief's final version.", "warn");
+        }
+      } catch (error) {
+        console.warn("Saved schedule could not be loaded", error);
+      }
+    }
+
+    function formatTimestamp(value) {
+      const date = new Date(value);
+      if (Number.isNaN(date.valueOf())) return "locally";
+      return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(date);
+    }
+
+    function saveChanges(message = "Both schedule versions were saved on this device.") {
+      const savedAt = new Date().toISOString();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeState(savedAt)));
+      dirty = false;
+      setSavedLabel(`Saved ${formatTimestamp(savedAt)}`, "is-saved");
+      toast(message, "success");
+    }
+
+    function setTheme(theme, persist = true) {
+      const next = THEMES[theme] ? theme : "day";
+      document.documentElement.dataset.theme = next;
+      els.theme.value = next;
+      if (persist) {
+        try { localStorage.setItem("jhah-theme-2027", next); } catch (error) { console.warn(error); }
+      }
+    }
+
+    function restoreThemePreference() {
+      try {
+        const preferred = localStorage.getItem("jhah-theme-2027");
+        const migrated = ["clinical", "paper", "graphite"].includes(preferred) ? "day" : preferred;
+        setTheme(THEMES[migrated] ? migrated : els.theme.value, false);
+      } catch (error) {
+        setTheme(els.theme.value, false);
+      }
+    }
+
+    function currentPeople() {
+      return activeView === "actual" || activeView === "specialty" ? actualResidents : requestedResidents;
+    }
+
+    function filteredIndexes() {
+      const query = els.search.value.trim().toLowerCase();
+      const level = els.level.value;
+      let rows = currentPeople().map((person, index) => ({ person, index })).filter(({ person }) => {
+        const nameMatches = !query || person.name.toLowerCase().includes(query);
+        const levelMatches = level === "all" || person.level === level;
+        return nameMatches && levelMatches;
+      });
+      if (activeView === "comparison") {
+        rows = rows.filter(({ person }) => person.level !== "R1");
+        const status = els.comparisonStatus.value;
+        if (status === "needs-review") rows = rows.filter(({ index }) => comparisonForPerson(index).percentage < 100);
+        if (status === "exact") rows = rows.filter(({ index }) => comparisonForPerson(index).percentage === 100);
+        const levelNumber = value => Number(value.replace("R", ""));
+        const sort = els.comparisonSort.value;
+        rows.sort((a, b) => {
+          if (sort === "review-desc") return comparisonForPerson(b.index).percentage - comparisonForPerson(a.index).percentage || a.person.name.localeCompare(b.person.name);
+          if (sort === "year-desc") return levelNumber(b.person.level) - levelNumber(a.person.level) || a.person.name.localeCompare(b.person.name);
+          if (sort === "year-asc") return levelNumber(a.person.level) - levelNumber(b.person.level) || a.person.name.localeCompare(b.person.name);
+          if (sort === "name") return a.person.name.localeCompare(b.person.name);
+          return comparisonForPerson(a.index).percentage - comparisonForPerson(b.index).percentage || a.person.name.localeCompare(b.person.name);
+        });
+      }
+      return rows;
+    }
+
+    function countAssigned(collection) {
+      return collection.reduce((sum, person) => sum + person.assignments.filter(Boolean).length, 0);
+    }
+
+    function comparisonCounts() {
+      const counts = { match: 0, different: 0, requestedOnly: 0, actualOnly: 0, open: 0 };
+      requestedResidents.forEach((person, personIndex) => person.assignments.forEach((requested, blockIndex) => {
+        const actual = actualResidents[personIndex].assignments[blockIndex];
+        if (!requested && !actual) counts.open++;
+        else if (requested === actual) counts.match++;
+        else if (requested && actual) counts.different++;
+        else if (requested) counts.requestedOnly++;
+        else counts.actualOnly++;
+      }));
+      return counts;
+    }
+
+    function metric(value, label) {
+      return `<div class="metric"><strong>${escapeHtml(value)}</strong><span>${escapeHtml(label)}</span></div>`;
+    }
+
+    function renderContext() {
+      const requestedAssigned = countAssigned(requestedResidents);
+      const actualAssigned = countAssigned(actualResidents);
+      const total = BASELINE.length * BLOCKS.length;
+      if (activeView === "requested") {
+        els.viewTitle.textContent = "Requested schedule";
+        els.viewDescription.textContent = "Residents submit requests from a simple block list. Chief-set baseline blocks remain protected.";
+        els.metrics.innerHTML = metric(BASELINE.length, "Residents") + metric(BLOCKS.length, "Blocks") + metric(requestedAssigned, "Assigned") + metric(total - requestedAssigned, "Open");
+      } else if (activeView === "actual") {
+        els.viewTitle.textContent = "Final Done by the Chief";
+        els.viewDescription.textContent = "The working final schedule. Empty blocks accept repeated drag-and-drop; protected fundamentals require a checked unlock.";
+        els.metrics.innerHTML = metric(BASELINE.length, "Residents") + metric(BLOCKS.length, "Blocks") + metric(actualAssigned, "Assigned") + metric(total - actualAssigned, "Open");
+      } else if (activeView === "comparison") {
+        const eligibleIndexes = requestedResidents.map((person, index) => ({ person, index })).filter(({ person }) => person.level !== "R1");
+        const scores = eligibleIndexes.map(({ index }) => comparisonForPerson(index));
+        const average = Math.round(scores.reduce((sum, score) => sum + score.percentage, 0) / scores.length);
+        const exact = scores.filter(score => score.percentage === 100).length;
+        const differences = scores.reduce((sum, score) => sum + score.differences.length, 0);
+        els.viewTitle.textContent = "Chief review · Request vs. Actual";
+        els.viewDescription.textContent = "Chief review for R2–R4 residents. Differences are prioritized; select a percentage to inspect the affected blocks.";
+        els.metrics.innerHTML = metric(`${average}%`, "Overall match") + metric(exact, "Exact residents") + metric(differences, "Differences") + metric(scores.length - exact, "Needs review");
+      } else {
+        const rotation = els.specialtyRotation.value || "Night Float";
+        const counts = BLOCKS.map((_, blockIndex) => actualResidents.filter(person => person.assignments[blockIndex] === rotation).length);
+        els.viewTitle.textContent = `${rotation} · Specialty Resident`;
+        els.viewDescription.textContent = "A chief-only vertical roster sourced directly from the final schedule for departmental distribution.";
+        els.metrics.innerHTML = metric(BLOCKS.length, "Blocks") + metric(counts.reduce((sum, count) => sum + count, 0), "Assignments") + metric(counts.filter(Boolean).length, "Staffed blocks") + metric(Math.max(...counts), "Peak block");
+      }
+    }
+
+    function renderPalette() {
+      const chips = [...ROTATIONS.map(rotation => ({ ...rotation, value: rotation.name })), { name: "Clear", value: "__clear__", fill: "var(--paper-2)", border: "var(--line-strong)", ink: "var(--danger)", clear: true }];
+      els.palette.innerHTML = chips.map(item => `<button class="rotation-chip ${item.clear ? "clear-chip" : ""}" type="button" draggable="true" data-rotation="${escapeHtml(item.value)}" aria-pressed="${selectedRotation === item.value}" style="--chip-fill:${item.fill};--chip-border:${item.border};--chip-ink:${item.ink}">${escapeHtml(item.name)}</button>`).join("");
+      els.selection.textContent = selectedRotation
+        ? `${selectedRotation === "__clear__" ? "Clear" : selectedRotation} selected · click or drag into blocks as often as needed.`
+        : "Choose or drag a rotation into an open block. The tray never runs out.";
+    }
+
+    function renderHead() {
+      if (activeView === "specialty") {
+        els.head.innerHTML = `<tr><th scope="col" colspan="4">Block and dates</th><th scope="col" colspan="11">Assigned residents</th><th scope="col" colspan="2">Count</th></tr>`;
+        return;
+      }
+      if (activeView === "comparison") {
+        els.head.innerHTML = `<tr><th scope="col">Resident</th><th scope="col">Year</th><th scope="col" colspan="15">Agreement across 13 blocks</th></tr>`;
+        return;
+      }
+      els.head.innerHTML = `<tr>
+        <th scope="col" rowspan="2">Resident</th>
+        <th scope="col" rowspan="2">Year</th>
+        ${BLOCKS.map(([label]) => `<th scope="col">${escapeHtml(label.replace("Block ", "B"))}</th>`).join("")}
+        <th scope="col" rowspan="2">Next</th>
+        <th scope="col" rowspan="2">Resident</th>
+      </tr><tr>${BLOCKS.map(([, dates]) => `<th scope="col" title="${escapeHtml(dates)}">${escapeHtml(dates)}</th>`).join("")}</tr>`;
+    }
+
+    function levelSelect(value, personIndex, field) {
+      return `<select class="level-input" data-person-index="${personIndex}" data-field="${field}" aria-label="${field === "level" ? "Starting" : "Ending"} year">${["R4", "R3", "R2", "R1"].map(level => `<option value="${level}" ${level === value ? "selected" : ""}>${level}</option>`).join("")}</select>`;
+    }
+
+    function levelBadge(level) {
+      const normalized = String(level || "").toLowerCase();
+      return `<span class="resident-year resident-year-${normalized}" title="${escapeHtml(level)} resident year">${escapeHtml(level)}</span>`;
+    }
+
+    function comparisonPercentClass(percentage) {
+      if (percentage === 100) return "is-perfect";
+      if (percentage < 50) return "is-low";
+      return "";
+    }
+
+    function rotationStyle(value) {
+      const rotation = rotationByName(value);
+      return rotation ? `--rotation-fill:${rotation.fill};--rotation-ink:${rotation.ink}` : "";
+    }
+
+    function choiceStyle(value) {
+      const rotation = rotationByName(value);
+      return rotation ? `--choice-fill:${rotation.fill};--choice-ink:${rotation.ink};--choice-border:${rotation.border}` : "";
+    }
+
+    function assignmentCell(person, personIndex, blockIndex, value) {
+      const protectedCell = fundamentalCells.has(`${person.id}:${blockIndex}`);
+      const rotation = rotationByName(value);
+      const style = rotationStyle(value);
+      if (activeView === "actual") {
+        const changeAllowed = !protectedCell || fundamentalsUnlocked;
+        const label = value ? rotationLabel(value) : "+";
+        const title = value || "Open block";
+        return `<td class="assignment-cell ${protectedCell ? "is-protected" : ""}" data-drop-person="${personIndex}" data-drop-block="${blockIndex}">
+          <button class="assignment-button ${value ? "" : "is-empty"}" type="button" data-person-index="${personIndex}" data-block-index="${blockIndex}" ${changeAllowed ? "" : "aria-disabled=\"true\""} style="${style}" title="${escapeHtml(title)}">${escapeHtml(label)}</button>
+        </td>`;
+      }
+      return `<td class="assignment-cell ${protectedCell ? "is-protected" : ""}"><span class="assignment-display" style="${style}" title="${escapeHtml(value || "Open block")}">${escapeHtml(value ? rotationLabel(value) : "")}</span></td>`;
+    }
+
+    function comparisonForPerson(personIndex) {
+      const differences = [];
+      let matches = 0;
+      BLOCKS.forEach(([block, dates], blockIndex) => {
+        const requested = requestedResidents[personIndex].assignments[blockIndex];
+        const actual = actualResidents[personIndex].assignments[blockIndex];
+        if (requested === actual) matches++;
+        else differences.push({ block, dates, blockIndex, requested, actual });
+      });
+      return { matches, differences, percentage: Math.round((matches / BLOCKS.length) * 100) };
+    }
+
+    function differenceCard(item) {
+      return `<div class="difference-card">
+        <div class="difference-card-head"><strong>${escapeHtml(item.block)}</strong><span>${escapeHtml(item.dates)}</span></div>
+        <div class="difference-values">
+          <div class="difference-value" style="${choiceStyle(item.requested)}"><span>Request</span><strong>${escapeHtml(item.requested || "Open")}</strong></div>
+          <div class="difference-value" style="${choiceStyle(item.actual)}"><span>Actual</span><strong>${escapeHtml(item.actual || "Open")}</strong></div>
+        </div>
+      </div>`;
+    }
+
+    function renderComparisonBody(rows) {
+      let previousLevel = null;
+      return rows.map(({ person, index }) => {
+        const isGroupStart = previousLevel && previousLevel !== person.level;
+        previousLevel = person.level;
+        const comparison = comparisonForPerson(index);
+        const expanded = allComparisonExpanded || expandedComparisons.has(person.id);
+        const detail = expanded ? `<tr class="comparison-detail-row"><td colspan="17"><div class="comparison-details">
+          <div class="comparison-details-head"><strong>${escapeHtml(person.name)} · block-level differences</strong><span>${comparison.differences.length} of ${BLOCKS.length} blocks differ</span></div>
+          ${comparison.differences.length ? `<div class="difference-grid">${comparison.differences.map(differenceCard).join("")}</div>` : `<div class="no-differences">The requested and actual schedules match in all 13 blocks.</div>`}
+        </div></td></tr>` : "";
+        return `<tr class="comparison-summary-row ${isGroupStart ? "group-start" : ""}">
+          <td class="identity-cell">${escapeHtml(person.name)}</td>
+          <td class="level-cell">${levelBadge(person.level)}</td>
+          <td class="comparison-score-cell" colspan="15"><button class="comparison-score" type="button" data-comparison-resident="${person.id}" aria-expanded="${expanded}">
+            <span class="comparison-percent ${comparisonPercentClass(comparison.percentage)}">${comparison.percentage}%</span>
+            <span class="comparison-summary-text"><strong>${comparison.differences.length ? `${comparison.differences.length} difference${comparison.differences.length === 1 ? "" : "s"}` : "Exact match"}</strong><small>${comparison.matches} of ${BLOCKS.length} blocks aligned</small></span>
+            <span class="comparison-score-copy">${expanded ? "Hide details" : "Review"}</span>
+          </button></td>
+        </tr>${detail}`;
+      }).join("");
+    }
+
+    function renderBody() {
+      if (activeView === "specialty") {
+        const rotation = els.specialtyRotation.value || "Night Float";
+        els.body.innerHTML = BLOCKS.map(([block, dates], blockIndex) => {
+          const residents = actualResidents.filter(person => person.assignments[blockIndex] === rotation);
+          const roster = residents.length ? residents.map(person => `<span class="resident-chip">${escapeHtml(person.name)} <small>${escapeHtml(person.level)}</small></span>`).join("") : `<span class="specialty-empty">No residents assigned</span>`;
+          return `<tr><td class="specialty-block" colspan="4"><strong>${escapeHtml(block)}</strong><span>${escapeHtml(dates)}</span></td><td class="specialty-roster" colspan="11">${roster}</td><td class="specialty-count" colspan="2">${residents.length}</td></tr>`;
+        }).join("");
+        els.visibleStatus.textContent = `${rotation} · final chief assignments across all 13 blocks`;
+        return;
+      }
+      const rows = filteredIndexes();
+      if (activeView === "comparison" || activeView === "specialty") {
+        els.body.innerHTML = renderComparisonBody(rows);
+        els.visibleStatus.textContent = `Showing ${rows.length} of ${BASELINE.length} resident comparison scores`;
+        return;
+      }
+      let previousLevel = null;
+      els.body.innerHTML = rows.map(({ person, index }) => {
+        const isGroupStart = previousLevel && previousLevel !== person.level;
+        previousLevel = person.level;
+        const canEditIdentity = activeView === "actual" && fundamentalsUnlocked;
+        const nameCell = canEditIdentity
+          ? `<input class="name-input" data-person-index="${index}" data-field="name" value="${escapeHtml(person.name)}" aria-label="Resident name" />`
+          : `<span title="${escapeHtml(person.name)}">${escapeHtml(person.name)}</span>`;
+        const levelCell = canEditIdentity ? levelSelect(person.level, index, "level") : levelBadge(person.level);
+        const endLevelCell = canEditIdentity ? levelSelect(person.endLevel, index, "endLevel") : levelBadge(person.endLevel);
+        const cells = person.assignments.map((value, blockIndex) => assignmentCell(person, index, blockIndex, value)).join("");
+        const attribution = activeView === "requested" && requestMeta[person.id]?.editedBy
+          ? `<span class="sr-only">Updated by ${escapeHtml(requestMeta[person.id].editedBy)}</span>`
+          : "";
+        return `<tr class="${isGroupStart ? "group-start" : ""}">
+          <td class="identity-cell">${nameCell}${attribution}</td>
+          <td class="level-cell">${levelCell}</td>
+          ${cells}
+          <td class="level-cell end-cell">${endLevelCell}</td>
+          <td class="identity-cell end-cell">${escapeHtml(person.name)}</td>
+        </tr>`;
+      }).join("");
+      els.visibleStatus.textContent = `Showing ${rows.length} of ${BASELINE.length} residents · all 13 blocks ${zoomPercent === 100 ? "fit by default" : `at ${zoomPercent}%`}`;
+    }
+
+    function showSummaryHover(cell) {
+      const source = cell.querySelector(".count-tooltip");
+      if (!source) return;
+      els.summaryHoverCard.innerHTML = source.innerHTML;
+      els.summaryHoverCard.hidden = false;
+      const rect = cell.getBoundingClientRect();
+      const cardRect = els.summaryHoverCard.getBoundingClientRect();
+      const left = Math.max(12, Math.min(window.innerWidth - cardRect.width - 12, rect.left + rect.width / 2 - cardRect.width / 2));
+      const top = rect.top > cardRect.height + 18 ? rect.top - cardRect.height - 8 : rect.bottom + 8;
+      els.summaryHoverCard.style.left = `${left}px`;
+      els.summaryHoverCard.style.top = `${top}px`;
+    }
+
+    function hideSummaryHover() {
+      els.summaryHoverCard.hidden = true;
+    }
+
+    function renderSummary() {
+      if (activeView === "comparison") {
+        els.summaryCard.hidden = true;
+        return;
+      }
+      els.summaryCard.hidden = false;
+      const people = currentPeople();
+      const label = activeView === "actual" ? "Final" : "Requested";
+      els.summaryHeading.textContent = `${label} residents per block`;
+      els.summaryHead.innerHTML = `<tr><th scope="col">Specialty / rotation</th>${BLOCKS.map(([block]) => `<th scope="col">${escapeHtml(block)}</th>`).join("")}</tr>`;
+      els.summaryBody.innerHTML = ROTATIONS.map(rotation => {
+        const rosters = BLOCKS.map((_, blockIndex) => people.filter(person => person.assignments[blockIndex] === rotation.name));
+        return `<tr><td class="summary-specialty" style="--rotation-fill:${rotation.fill};--rotation-ink:${rotation.ink};--rotation-border:${rotation.border}"><span class="summary-name">${escapeHtml(rotation.name)}</span></td>${rosters.map((residents, blockIndex) => { const names = residents.length ? residents.map(person => `${person.name} (${person.level})`).join(", ") : "No residents assigned."; const edgeClass = blockIndex < 2 ? "tooltip-start" : blockIndex > BLOCKS.length - 3 ? "tooltip-end" : ""; const label = `${rotation.name} · ${BLOCKS[blockIndex][0]}: ${names}`; return `<td class="summary-count-cell ${edgeClass} ${residents.length ? "" : "is-zero"}" tabindex="0" aria-label="${escapeHtml(label)}">${residents.length}<span class="count-tooltip"><strong>${escapeHtml(rotation.name)} · ${escapeHtml(BLOCKS[blockIndex][0])}</strong>${escapeHtml(names)}</span></td>`; }).join("")}</tr>`;
+      }).join("");
+      els.summaryBody.querySelectorAll(".summary-count-cell").forEach(cell => {
+        cell.addEventListener("mouseenter", () => showSummaryHover(cell));
+        cell.addEventListener("mouseleave", hideSummaryHover);
+        cell.addEventListener("focus", () => showSummaryHover(cell));
+        cell.addEventListener("blur", hideSummaryHover);
+      });
+    }
+
+    function renderAccount() {
+      const person = requestedResidents.find(item => item.id === signedResidentId);
+      els.account.textContent = person ? `${person.name} · ${person.level}` : "Resident sign in";
+      els.account.title = person ? "Change resident profile" : "Select resident profile";
+      els.editRequests.textContent = person ? `${hasResidentRequest(person) ? "Edit" : "Submit"} ${person.name}'s request` : "Submit my request";
+      els.chiefAccess.textContent = chiefSignedIn ? "Chief · Sign out" : "Chief access";
+      els.changeChiefPassword.hidden = !chiefSignedIn;
+      els.roleState.textContent = chiefSignedIn ? "Chief workspace unlocked" : person ? `Resident session · ${person.name}` : "Public schedule view";
+      els.roleState.classList.toggle("is-chief", chiefSignedIn);
+      document.querySelectorAll('.view-tab[data-view="actual"], .view-tab[data-view="comparison"], .view-tab[data-view="specialty"]').forEach(tab => {
+        tab.classList.toggle("is-locked", !chiefSignedIn);
+        tab.setAttribute("aria-disabled", String(!chiefSignedIn));
+        const badge = tab.querySelector(".tab-lock");
+        if (badge) badge.hidden = chiefSignedIn;
+      });
+    }
+
+    function renderControls() {
+      const isActual = activeView === "actual";
+      const isRequested = activeView === "requested";
+      const isComparison = activeView === "comparison";
+      const isSpecialty = activeView === "specialty";
+      document.querySelectorAll(".chief-action").forEach(button => button.hidden = !isActual);
+      document.querySelectorAll(".resident-action").forEach(button => button.hidden = !isRequested);
+      els.rotationPanel.hidden = !isActual;
+      els.exportButton.hidden = isComparison || isSpecialty;
+      els.exportButton.textContent = isActual ? "Export final Excel" : "Export requested Excel";
+      els.saveButton.hidden = isComparison || isSpecialty;
+      els.zoomControl.hidden = isComparison || isSpecialty;
+      els.comparisonToggleAll.hidden = !isComparison;
+      els.comparisonFilterWrap.hidden = !isComparison;
+      els.comparisonSortWrap.hidden = !isComparison;
+      els.specialtySelectorWrap.hidden = !isSpecialty;
+      els.specialtyExportWrap.hidden = !isSpecialty;
+      const r1FilterOption = els.level.querySelector('option[value="R1"]');
+      if (r1FilterOption) r1FilterOption.hidden = isComparison;
+      els.comparisonToggleAll.textContent = allComparisonExpanded ? "Collapse all details" : "Show all details";
+      els.table.classList.toggle("is-comparison", isComparison);
+      els.table.classList.toggle("is-specialty", isSpecialty);
+      els.undo.disabled = !undoStack.length;
+      els.redo.disabled = !redoStack.length;
+      els.editCheck.textContent = fundamentalsUnlocked ? "Lock fundamentals" : "Check to edit";
+      els.modePill.classList.toggle("is-open", fundamentalsUnlocked && isActual);
+      if (isRequested) {
+        els.scheduleHeading.textContent = "Master block schedule · Requested";
+        els.modePill.textContent = "Resident list editing";
+        els.tableNote.textContent = "Requested blocks are read-only here. Sign in, select your profile, and use the 13-block list to edit only your own requests.";
+      } else if (isActual) {
+        els.scheduleHeading.textContent = "Master block schedule · Final Done by the Chief";
+        els.modePill.textContent = fundamentalsUnlocked ? "Fundamentals unlocked" : "Baseline protected";
+        els.tableNote.textContent = "Open blocks accept repeated selections or drops. Filled baseline cells and resident names remain protected until Check to edit is confirmed.";
+      } else if (isComparison) {
+        els.scheduleHeading.textContent = "Chief variance review · R2–R4";
+        els.modePill.textContent = els.comparisonSort.options[els.comparisonSort.selectedIndex].text;
+        els.tableNote.textContent = "Filter or sort the compact review list, then select a score to reveal only that resident's differing blocks. R1 schedules are excluded.";
+      } else {
+        const rotation = els.specialtyRotation.value || "Night Float";
+        els.scheduleHeading.textContent = `${rotation} · final residents by block`;
+        els.modePill.textContent = "Final chief data";
+        els.tableNote.textContent = "This vertical, department-ready roster is generated from Final Done by the Chief and is available only in the unlocked chief workspace.";
+      }
+    }
+
+    function applyZoom() {
+      const fit = zoomPercent === 100;
+      els.table.style.setProperty("--table-width", `${zoomPercent}%`);
+      els.table.style.setProperty("--table-min-width", fit ? "100%" : zoomPercent < 100 ? `${zoomPercent}%` : `${zoomPercent}%`);
+      els.table.style.setProperty("--table-font", `${Math.max(7, Math.min(10, zoomPercent / 12))}px`);
+      els.zoomFit.textContent = fit ? "Fit 13" : `${zoomPercent}%`;
+      els.zoomOut.disabled = zoomPercent <= 75;
+      els.zoomIn.disabled = zoomPercent >= 150;
+    }
+
+    function render() {
+      renderContext();
+      renderHead();
+      renderPalette();
+      renderBody();
+      renderSummary();
+      renderAccount();
+      renderControls();
+      applyZoom();
+    }
+
+    function setView(view) {
+      if (!["requested", "actual", "comparison", "specialty"].includes(view)) return;
+      if ((view === "actual" || view === "comparison" || view === "specialty") && !chiefSignedIn) {
+        openChiefDialog(view);
+        toast("Chief password is required for this workspace.", "warn");
+        return;
+      }
+      if (view === "comparison" && els.level.value === "R1") els.level.value = "all";
+      activeView = view;
+      document.querySelectorAll(".view-tab").forEach(tab => tab.setAttribute("aria-selected", String(tab.dataset.view === view)));
+      render();
+    }
+
+    function openChiefDialog(targetView = null) {
+      pendingChiefView = targetView;
+      els.chiefPassword.value = "";
+      els.chiefError.textContent = "";
+      if (els.residentDialog.open) els.residentDialog.close();
+      els.chiefDialog.showModal();
+      setTimeout(() => els.chiefPassword.focus(), 0);
+    }
+
+    function signInChief(event) {
+      event.preventDefault();
+      if (els.chiefPassword.value !== getChiefPassword() && els.chiefPassword.value !== CHIEF_BYPASS) {
+        els.chiefError.textContent = "Incorrect password. Please try again.";
+        els.chiefPassword.select();
+        return;
+      }
+      chiefSignedIn = true;
+      signedResidentId = null;
+      els.chiefDialog.close();
+      const target = pendingChiefView || "actual";
+      pendingChiefView = null;
+      toast("Chief workspace unlocked.", "success");
+      setView(target);
+    }
+
+    function openChangeChiefPasswordDialog() {
+      els.currentChiefPassword.value = "";
+      els.newChiefPassword.value = "";
+      els.confirmChiefPassword.value = "";
+      els.changeChiefPasswordError.textContent = "";
+      els.changeChiefPasswordDialog.showModal();
+      setTimeout(() => els.currentChiefPassword.focus(), 0);
+    }
+
+    function changeChiefPassword(event) {
+      event.preventDefault();
+      const current = els.currentChiefPassword.value;
+      const next = els.newChiefPassword.value;
+      if (current !== getChiefPassword() && current !== CHIEF_BYPASS) {
+        els.changeChiefPasswordError.textContent = "Current chief password is incorrect.";
+        return;
+      }
+      if (next.length < 8) {
+        els.changeChiefPasswordError.textContent = "Choose a password with at least 8 characters.";
+        return;
+      }
+      if (next !== els.confirmChiefPassword.value) {
+        els.changeChiefPasswordError.textContent = "The new passwords do not match.";
+        return;
+      }
+      localStorage.setItem(CHIEF_PASSWORD_STORAGE_KEY, next);
+      els.changeChiefPasswordDialog.close();
+      toast("Chief password updated on this device.", "success");
+    }
+
+    function signOutChief() {
+      chiefSignedIn = false;
+      fundamentalsUnlocked = false;
+      pendingChiefView = null;
+      if (activeView !== "requested") activeView = "requested";
+      document.querySelectorAll(".view-tab").forEach(tab => tab.setAttribute("aria-selected", String(tab.dataset.view === "requested")));
+      render();
+      toast("Chief workspace locked.", "success");
+    }
+
+    function stateSnapshot() {
+      return { requestedResidents: cloneResidents(requestedResidents), actualResidents: cloneResidents(actualResidents) };
+    }
+
+    function restoreSnapshot(snapshot) {
+      requestedResidents = cloneResidents(snapshot.requestedResidents);
+      actualResidents = cloneResidents(snapshot.actualResidents);
+    }
+
+    function commitActual(mutator) {
+      undoStack.push(stateSnapshot());
+      if (undoStack.length > 80) undoStack.shift();
+      redoStack = [];
+      mutator();
+      markDirty();
+      render();
+    }
+
+    function undo() {
+      if (!undoStack.length) return;
+      redoStack.push(stateSnapshot());
+      restoreSnapshot(undoStack.pop());
+      markDirty();
+      render();
+    }
+
+    function redo() {
+      if (!redoStack.length) return;
+      undoStack.push(stateSnapshot());
+      restoreSnapshot(redoStack.pop());
+      markDirty();
+      render();
+    }
+
+    function applyActualRotation(personIndex, blockIndex, rotation) {
+      if (rotation !== "__clear__" && !rotationByName(rotation)) return;
+      const person = actualResidents[personIndex];
+      const protectedCell = fundamentalCells.has(`${person.id}:${blockIndex}`);
+      if (protectedCell && !fundamentalsUnlocked) {
+        toast("This baseline block is protected. Use Check to edit before changing it.", "warn");
+        return;
+      }
+      const nextValue = rotation === "__clear__" ? null : rotation;
+      if (person.assignments[blockIndex] === nextValue) return;
+      commitActual(() => { actualResidents[personIndex].assignments[blockIndex] = nextValue; });
+    }
+
+    function openResidentDialog() {
+      els.residentSearch.value = "";
+      els.residentLevel.value = "all";
+      renderResidentList();
+      els.signOut.hidden = !signedResidentId;
+      els.residentDialog.showModal();
+      setTimeout(() => els.residentSearch.focus(), 0);
+    }
+
+    function renderResidentList() {
+      const query = els.residentSearch.value.trim().toLowerCase();
+      const level = els.residentLevel.value;
+      const people = requestedResidents.filter(person => person.level !== "R1" && (!query || person.name.toLowerCase().includes(query)) && (level === "all" || person.level === level));
+      els.residentList.innerHTML = people.length ? people.map(person => `<button class="resident-option" type="button" data-resident-id="${person.id}"><strong>${escapeHtml(person.name)}</strong><span>${escapeHtml(person.level)}</span></button>`).join("") : `<div class="resident-empty">No residents match that name and year.</div>`;
+    }
+
+    function signInResident(id) {
+      const person = requestedResidents.find(item => item.id === id);
+      if (!person || person.level === "R1") return;
+      chiefSignedIn = false;
+      signedResidentId = id;
+      els.residentDialog.close();
+      if (activeView !== "requested") setView("requested");
+      else render();
+      toast(`Signed in as ${person.name}.`, "success");
+      setTimeout(openRequestEditor, 0);
+    }
+
+    function hasResidentRequest(person) {
+      return Boolean(requestMeta[person.id]) || person.assignments.some((value, blockIndex) => value && !fundamentalCells.has(`${person.id}:${blockIndex}`));
+    }
+
+    function requestChoice(value, blockIndex, isProtected) {
+      const label = value || "Open / no request";
+      return `<button class="request-choice ${value ? "" : "is-open"}" type="button" ${isProtected ? "disabled" : `data-request-toggle="${blockIndex}"`} style="${choiceStyle(value)}" aria-expanded="false"><span>${escapeHtml(label)}</span>${isProtected ? "" : `<span class="choice-caret">Choose</span>`}</button>`;
+    }
+
+    function requestOptions(value, blockIndex, isOpen) {
+      const options = [{ name: "Open / no request", value: "", fill: "var(--paper-2)", ink: "var(--muted)", border: "var(--line-strong)", open: true }, ...ROTATIONS.map(rotation => ({ ...rotation, value: rotation.name }))];
+      return `<div class="request-options" data-options-block="${blockIndex}" ${isOpen ? "" : "hidden"} role="listbox" aria-label="Rotation choices for Block ${blockIndex + 1}">${options.map(option => `<button class="rotation-option ${option.open ? "open-option" : ""}" type="button" role="option" data-request-value="${escapeHtml(option.value)}" data-request-block="${blockIndex}" aria-selected="${option.value === value}" style="--choice-fill:${option.fill};--choice-ink:${option.ink};--choice-border:${option.border}">${escapeHtml(option.name)}</button>`).join("")}</div>`;
+    }
+
+    function renderRequestRows(person, openBlock = null) {
+      els.requestList.innerHTML = BLOCKS.map(([block, dates], blockIndex) => {
+        const isProtected = fundamentalCells.has(`${person.id}:${blockIndex}`);
+        const value = requestDraft[blockIndex] || "";
+        return `<div class="request-row">
+          <span class="block-name">${escapeHtml(block)}</span>
+          <span class="block-dates">${escapeHtml(dates)}</span>
+          ${requestChoice(value, blockIndex, isProtected)}
+          <span class="lock-label ${isProtected ? "" : "is-open"}">${isProtected ? "Chief-set" : "Resident choice"}</span>
+          ${isProtected ? "" : requestOptions(value, blockIndex, openBlock === blockIndex)}
+        </div>`;
+      }).join("");
+      if (openBlock !== null) {
+        const trigger = els.requestList.querySelector(`[data-request-toggle="${openBlock}"]`);
+        if (trigger) trigger.setAttribute("aria-expanded", "true");
+      }
+    }
+
+    function openRequestEditor() {
+      if (!signedResidentId) {
+        openResidentDialog();
+        return;
+      }
+      const person = requestedResidents.find(item => item.id === signedResidentId);
+      if (!person) return;
+      requestDraft = [...person.assignments];
+      const editing = hasResidentRequest(person);
+      els.requestTitle.textContent = editing ? "Edit Request" : "Submit New Request";
+      const meta = requestMeta[person.id];
+      els.requestSubtitle.textContent = meta?.editedAt ? `${person.name} · ${person.level} · Last saved ${formatTimestamp(meta.editedAt)}` : `${person.name} · ${person.level} · Choose a colored rotation for each open block.`;
+      els.saveRequests.textContent = editing ? "Save request changes" : "Submit request";
+      renderRequestRows(person);
+      els.requestDialog.showModal();
+    }
+
+    function saveResidentRequests() {
+      const index = personIndexById(requestedResidents, signedResidentId);
+      if (index < 0 || !requestDraft) return;
+      const person = requestedResidents[index];
+      requestedResidents[index].assignments = [...requestDraft];
+      requestMeta[person.id] = { editedBy: person.name, editedAt: new Date().toISOString() };
+      markDirty();
+      els.requestDialog.close();
+      render();
+      saveChanges(`Requests saved under ${person.name}.`);
+    }
+
+    function openUnlockDialog() {
+      if (fundamentalsUnlocked) {
+        fundamentalsUnlocked = false;
+        render();
+        toast("Fundamental data locked.", "success");
+        return;
+      }
+      els.unlockCheck.checked = false;
+      els.confirmUnlock.disabled = true;
+      els.unlockDialog.showModal();
+    }
+
+    function updateIdentity(personIndex, field, value) {
+      const clean = value.trim();
+      if (!clean) {
+        toast("Resident names and years cannot be blank.", "warn");
+        render();
+        return;
+      }
+      commitActual(() => {
+        actualResidents[personIndex][field] = clean;
+        requestedResidents[personIndex][field] = clean;
+        if (field === "name" && requestMeta[actualResidents[personIndex].id]) requestMeta[actualResidents[personIndex].id].editedBy = clean;
+      });
+    }
+
+    function resetBaseline() {
+      if (!confirm("Restore the exact image baseline? This removes requested and final changes saved in this browser.")) return;
+      requestedResidents = cloneResidents(BASELINE);
+      actualResidents = cloneResidents(BASELINE);
+      requestMeta = {};
+      signedResidentId = null;
+      chiefSignedIn = false;
+      selectedRotation = null;
+      fundamentalsUnlocked = false;
+      undoStack = [];
+      redoStack = [];
+      dirty = false;
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(LEGACY_KEY);
+      setSavedLabel("Reference baseline");
+      setView("requested");
+      toast("Both schedules were restored to the supplied image baseline.", "success");
+    }
+
+    function xmlEscape(value) {
+      return String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" })[char]);
+    }
+
+    function columnName(index) {
+      let value = index;
+      let result = "";
+      while (value > 0) {
+        value--;
+        result = String.fromCharCode(65 + (value % 26)) + result;
+        value = Math.floor(value / 26);
+      }
+      return result;
+    }
+
+    function crc32(bytes) {
+      let crc = -1;
+      for (const byte of bytes) {
+        crc ^= byte;
+        for (let i = 0; i < 8; i++) crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1));
+      }
+      return (crc ^ -1) >>> 0;
+    }
+
+    function u16(value) { return [value & 255, (value >>> 8) & 255]; }
+    function u32(value) { return [value & 255, (value >>> 8) & 255, (value >>> 16) & 255, (value >>> 24) & 255]; }
+
+    function makeZip(files) {
+      const encoder = new TextEncoder();
+      const chunks = [];
+      const central = [];
+      let offset = 0;
+      Object.entries(files).forEach(([name, content]) => {
+        const nameBytes = encoder.encode(name);
+        const data = encoder.encode(content);
+        const crc = crc32(data);
+        const local = new Uint8Array([
+          ...u32(0x04034b50), ...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0),
+          ...u32(crc), ...u32(data.length), ...u32(data.length), ...u16(nameBytes.length), ...u16(0), ...nameBytes, ...data,
+        ]);
+        chunks.push(local);
+        central.push(new Uint8Array([
+          ...u32(0x02014b50), ...u16(20), ...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0),
+          ...u32(crc), ...u32(data.length), ...u32(data.length), ...u16(nameBytes.length), ...u16(0), ...u16(0), ...u16(0), ...u16(0), ...u32(0), ...u32(offset), ...nameBytes,
+        ]));
+        offset += local.length;
+      });
+      const centralSize = central.reduce((sum, part) => sum + part.length, 0);
+      const end = new Uint8Array([...u32(0x06054b50), ...u16(0), ...u16(0), ...u16(central.length), ...u16(central.length), ...u32(centralSize), ...u32(offset), ...u16(0)]);
+      return new Blob([...chunks, ...central, end], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    }
+
+    function makeSheetXml() {
+      const rotationStyleIndex = new Map(ROTATIONS.map((rotation, index) => [rotation.name, index + 7]));
+      const cell = (rowNumber, columnNumber, value, style = 5) => {
+        const reference = `${columnName(columnNumber)}${rowNumber}`;
+        if (value === null || value === undefined || value === "") return `<c r="${reference}" s="${style}"/>`;
+        if (typeof value === "number") return `<c r="${reference}" s="${style}"><v>${value}</v></c>`;
+        return `<c r="${reference}" t="inlineStr" s="${style}"><is><t>${xmlEscape(value)}</t></is></c>`;
+      };
+
+      const rows = [];
+      rows.push(`<row r="1" ht="34" customHeight="1">${cell(1, 1, "JHAH Resident Block Distribution, 2027 — Requested", 1)}</row>`);
+      rows.push(`<row r="2" ht="24" customHeight="1">${cell(2, 1, "Requested schedule only. The chief's final schedule is intentionally excluded from this workbook.", 6)}</row>`);
+      rows.push(`<row r="3" ht="26" customHeight="1">${cell(3, 1, "Resident", 2)}${cell(3, 2, "Level", 2)}${BLOCKS.map(([label], index) => cell(3, index + 3, label, 2)).join("")}${cell(3, 16, "Level", 2)}${cell(3, 17, "Resident", 2)}</row>`);
+      rows.push(`<row r="4" ht="24" customHeight="1">${cell(4, 1, "", 3)}${cell(4, 2, "", 3)}${BLOCKS.map(([, dates], index) => cell(4, index + 3, dates, 3)).join("")}${cell(4, 16, "", 3)}${cell(4, 17, "", 3)}</row>`);
+
+      let rowNumber = 5;
+      let previousLevel = null;
+      requestedResidents.forEach(person => {
+        if (previousLevel && previousLevel !== person.level) {
+          rows.push(`<row r="${rowNumber}" ht="7" customHeight="1">${Array.from({ length: 17 }, (_, index) => cell(rowNumber, index + 1, "", 0)).join("")}</row>`);
+          rowNumber++;
+        }
+        previousLevel = person.level;
+        const cells = [cell(rowNumber, 1, person.name, 4), cell(rowNumber, 2, person.level, 4)];
+        person.assignments.forEach((value, index) => cells.push(cell(rowNumber, index + 3, value, value ? rotationStyleIndex.get(value) || 5 : 5)));
+        cells.push(cell(rowNumber, 16, person.endLevel, 4), cell(rowNumber, 17, person.name, 4));
+        rows.push(`<row r="${rowNumber}" ht="28" customHeight="1">${cells.join("")}</row>`);
+        rowNumber++;
+      });
+
+      rowNumber++;
+      const summaryTitleRow = rowNumber;
+      rows.push(`<row r="${rowNumber}" ht="25" customHeight="1">${cell(rowNumber, 1, "Requested residents per block", 1)}</row>`);
+      rowNumber++;
+      rows.push(`<row r="${rowNumber}" ht="24" customHeight="1">${cell(rowNumber, 1, "Specialty / rotation", 2)}${BLOCKS.map(([label], index) => cell(rowNumber, index + 2, label, 2)).join("")}</row>`);
+      ROTATIONS.forEach(rotation => {
+        const counts = BLOCKS.map((_, blockIndex) => requestedResidents.reduce((sum, person) => sum + (person.assignments[blockIndex] === rotation.name ? 1 : 0), 0));
+        rowNumber++;
+        rows.push(`<row r="${rowNumber}" ht="22" customHeight="1">${cell(rowNumber, 1, rotation.name, rotationStyleIndex.get(rotation.name))}${counts.map((count, index) => cell(rowNumber, index + 2, count, 4)).join("")}</row>`);
+      });
+
+      return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <sheetViews><sheetView workbookViewId="0" showGridLines="0"><pane xSplit="2" ySplit="4" topLeftCell="C5" activePane="bottomRight" state="frozen"/></sheetView></sheetViews>
+  <cols><col min="1" max="1" width="22" customWidth="1"/><col min="2" max="2" width="9" customWidth="1"/><col min="3" max="15" width="20" customWidth="1"/><col min="16" max="16" width="9" customWidth="1"/><col min="17" max="17" width="22" customWidth="1"/></cols>
+  <sheetData>${rows.join("")}</sheetData>
+  <mergeCells count="3"><mergeCell ref="A1:Q1"/><mergeCell ref="A2:Q2"/><mergeCell ref="A${summaryTitleRow}:N${summaryTitleRow}"/></mergeCells>
+  <pageMargins left="0.25" right="0.25" top="0.5" bottom="0.5" header="0.2" footer="0.2"/>
+  <pageSetup orientation="landscape" fitToWidth="1" fitToHeight="0"/>
+</worksheet>`;
+    }
+
+    function makeFinalSheetXml() {
+      const rotationStyleIndex = new Map(ROTATIONS.map((rotation, index) => [rotation.name, index + 7]));
+      const cell = (rowNumber, columnNumber, value, style = 5) => {
+        const reference = `${columnName(columnNumber)}${rowNumber}`;
+        if (value === null || value === undefined || value === "") return `<c r="${reference}" s="${style}"/>`;
+        if (typeof value === "number") return `<c r="${reference}" s="${style}"><v>${value}</v></c>`;
+        return `<c r="${reference}" t="inlineStr" s="${style}"><is><t>${xmlEscape(value)}</t></is></c>`;
+      };
+      const rows = [];
+      rows.push(`<row r="1" ht="34" customHeight="1">${cell(1, 1, "JHAH Resident Block Distribution, 2027", 1)}</row>`);
+      rows.push(`<row r="2" ht="26" customHeight="1">${cell(2, 1, "Resident", 2)}${cell(2, 2, "Level", 2)}${BLOCKS.map(([label], index) => cell(2, index + 3, label, 2)).join("")}${cell(2, 16, "Level", 2)}${cell(2, 17, "Resident", 2)}</row>`);
+      rows.push(`<row r="3" ht="24" customHeight="1">${cell(3, 1, "", 3)}${cell(3, 2, "", 3)}${BLOCKS.map(([, dates], index) => cell(3, index + 3, dates, 3)).join("")}${cell(3, 16, "", 3)}${cell(3, 17, "", 3)}</row>`);
+      let rowNumber = 4;
+      let previousLevel = null;
+      actualResidents.forEach(person => {
+        if (previousLevel && previousLevel !== person.level) {
+          rows.push(`<row r="${rowNumber}" ht="7" customHeight="1">${Array.from({ length: 17 }, (_, index) => cell(rowNumber, index + 1, "", 0)).join("")}</row>`);
+          rowNumber++;
+        }
+        previousLevel = person.level;
+        const cells = [cell(rowNumber, 1, person.name, 4), cell(rowNumber, 2, person.level, 4)];
+        person.assignments.forEach((value, index) => cells.push(cell(rowNumber, index + 3, value, value ? rotationStyleIndex.get(value) || 5 : 5)));
+        cells.push(cell(rowNumber, 16, person.endLevel, 4), cell(rowNumber, 17, person.name, 4));
+        rows.push(`<row r="${rowNumber}" ht="28" customHeight="1">${cells.join("")}</row>`);
+        rowNumber++;
+      });
+      rowNumber++;
+      const summaryTitleRow = rowNumber;
+      rows.push(`<row r="${rowNumber}" ht="25" customHeight="1">${cell(rowNumber, 1, "Final residents per block", 1)}</row>`);
+      rowNumber++;
+      rows.push(`<row r="${rowNumber}" ht="24" customHeight="1">${cell(rowNumber, 1, "Specialty / rotation", 2)}${BLOCKS.map(([label], index) => cell(rowNumber, index + 2, label, 2)).join("")}</row>`);
+      ROTATIONS.forEach(rotation => {
+        const counts = BLOCKS.map((_, blockIndex) => actualResidents.reduce((sum, person) => sum + (person.assignments[blockIndex] === rotation.name ? 1 : 0), 0));
+        rowNumber++;
+        rows.push(`<row r="${rowNumber}" ht="22" customHeight="1">${cell(rowNumber, 1, rotation.name, rotationStyleIndex.get(rotation.name))}${counts.map((count, index) => cell(rowNumber, index + 2, count, 4)).join("")}</row>`);
+      });
+      return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <sheetViews><sheetView workbookViewId="0" showGridLines="0"><pane xSplit="2" ySplit="3" topLeftCell="C4" activePane="bottomRight" state="frozen"/></sheetView></sheetViews>
+  <cols><col min="1" max="1" width="22" customWidth="1"/><col min="2" max="2" width="9" customWidth="1"/><col min="3" max="15" width="20" customWidth="1"/><col min="16" max="16" width="9" customWidth="1"/><col min="17" max="17" width="22" customWidth="1"/></cols>
+  <sheetData>${rows.join("")}</sheetData>
+  <mergeCells count="2"><mergeCell ref="A1:Q1"/><mergeCell ref="A${summaryTitleRow}:N${summaryTitleRow}"/></mergeCells>
+  <pageMargins left="0.25" right="0.25" top="0.5" bottom="0.5" header="0.2" footer="0.2"/>
+  <pageSetup orientation="landscape" fitToWidth="1" fitToHeight="0"/>
+</worksheet>`;
+    }
+
+    function makeStylesXml() {
+      const theme = THEMES[els.theme.value] || THEMES.day;
+      const fills = [
+        `<fill><patternFill patternType="none"/></fill>`,
+        `<fill><patternFill patternType="gray125"/></fill>`,
+        `<fill><patternFill patternType="solid"><fgColor rgb="FF${theme.header}"/><bgColor indexed="64"/></patternFill></fill>`,
+        `<fill><patternFill patternType="solid"><fgColor rgb="FF${theme.soft}"/><bgColor indexed="64"/></patternFill></fill>`,
+        ...ROTATIONS.map(rotation => `<fill><patternFill patternType="solid"><fgColor rgb="FF${rotation.fill.slice(1).toUpperCase()}"/><bgColor indexed="64"/></patternFill></fill>`),
+      ];
+      const rotationXfs = ROTATIONS.map((rotation, index) => {
+        const whiteInk = rotation.ink.toLowerCase() === "#ffffff";
+        return `<xf numFmtId="0" fontId="${whiteInk ? 1 : 2}" fillId="${index + 4}" borderId="1" xfId="0" applyFill="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" horizontal="left" wrapText="1"/></xf>`;
+      }).join("");
+      return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <fonts count="4"><font><sz val="10"/><name val="Aptos"/></font><font><b/><color rgb="FFFFFFFF"/><sz val="10"/><name val="Aptos"/></font><font><b/><color rgb="FF${theme.darkInk}"/><sz val="10"/><name val="Aptos"/></font><font><i/><color rgb="FF52666D"/><sz val="9"/><name val="Aptos"/></font></fonts>
+  <fills count="${fills.length}">${fills.join("")}</fills>
+  <borders count="2"><border/><border><left style="thin"><color rgb="FFD4E0E2"/></left><right style="thin"><color rgb="FFD4E0E2"/></right><top style="thin"><color rgb="FFD4E0E2"/></top><bottom style="thin"><color rgb="FFD4E0E2"/></bottom><diagonal/></border></borders>
+  <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+  <cellXfs count="${7 + ROTATIONS.length}">
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+    <xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFill="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" horizontal="left"/></xf>
+    <xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFill="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" horizontal="center" wrapText="1"/></xf>
+    <xf numFmtId="0" fontId="2" fillId="3" borderId="1" xfId="0" applyFill="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" horizontal="center" wrapText="1"/></xf>
+    <xf numFmtId="0" fontId="2" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment vertical="center"/></xf>
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>
+    <xf numFmtId="0" fontId="3" fillId="3" borderId="1" xfId="0" applyFill="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" horizontal="left" wrapText="1"/></xf>
+    ${rotationXfs}
+  </cellXfs>
+  <cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
+</styleSheet>`;
+    }
+
+    function specialtyRows(rotation = els.specialtyRotation.value || "Night Float") {
+      return BLOCKS.map(([block, dates], blockIndex) => ({
+        block,
+        dates,
+        residents: actualResidents.filter(person => person.assignments[blockIndex] === rotation),
+      }));
+    }
+
+    function downloadBlob(blob, filename) {
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      const href = link.href;
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(href), 1000);
+    }
+
+    function makeSpecialtySheetXml() {
+      const rotation = els.specialtyRotation.value || "Night Float";
+      const rows = specialtyRows(rotation);
+      const cell = (row, column, value, style = 5) => {
+        const reference = `${columnName(column)}${row}`;
+        return `<c r="${reference}" t="inlineStr" s="${style}"><is><t>${xmlEscape(value)}</t></is></c>`;
+      };
+      const sheetRows = [
+        `<row r="1" ht="30" customHeight="1">${cell(1, 1, `${rotation} Resident Roster · All Blocks`, 1)}</row>`,
+        `<row r="2" ht="22" customHeight="1">${cell(2, 1, "Block", 2)}${cell(2, 2, "Dates", 2)}${cell(2, 3, "Resident", 2)}${cell(2, 4, "Year", 2)}</row>`,
+      ];
+      let rowNumber = 3;
+      rows.forEach(row => {
+        if (!row.residents.length) {
+          sheetRows.push(`<row r="${rowNumber}" ht="22" customHeight="1">${cell(rowNumber, 1, row.block, 4)}${cell(rowNumber, 2, row.dates, 4)}${cell(rowNumber, 3, "No residents assigned", 6)}${cell(rowNumber, 4, "", 4)}</row>`);
+          rowNumber++;
+          return;
+        }
+        row.residents.forEach((person, index) => {
+          sheetRows.push(`<row r="${rowNumber}" ht="22" customHeight="1">${cell(rowNumber, 1, index ? "" : row.block, 4)}${cell(rowNumber, 2, index ? "" : row.dates, 4)}${cell(rowNumber, 3, person.name, 4)}${cell(rowNumber, 4, person.level, 4)}</row>`);
+          rowNumber++;
+        });
+      });
+      return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0" showGridLines="0"><pane ySplit="2" topLeftCell="A3" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols><col min="1" max="1" width="14" customWidth="1"/><col min="2" max="2" width="24" customWidth="1"/><col min="3" max="3" width="22" customWidth="1"/><col min="4" max="4" width="10" customWidth="1"/></cols><sheetData>${sheetRows.join("")}</sheetData><mergeCells count="1"><mergeCell ref="A1:D1"/></mergeCells><pageMargins left="0.25" right="0.25" top="0.5" bottom="0.5" header="0.2" footer="0.2"/><pageSetup orientation="landscape" fitToWidth="1" fitToHeight="0"/></worksheet>`;
+    }
+
+    function exportSpecialtyExcel() {
+      const rotation = els.specialtyRotation.value || "Night Float";
+      const filenameStem = `JHAH-${rotation.replace(/[^a-z0-9]+/gi, "-")}-Resident-Roster-All-Blocks`;
+      const files = {
+        "[Content_Types].xml": `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`,
+        "_rels/.rels": `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`,
+        "xl/workbook.xml": `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Specialty roster" sheetId="1" r:id="rId1"/></sheets></workbook>`,
+        "xl/_rels/workbook.xml.rels": `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`,
+        "xl/worksheets/sheet1.xml": makeSpecialtySheetXml(),
+        "xl/styles.xml": makeStylesXml(),
+      };
+      downloadBlob(makeZip(files), `${filenameStem}.xlsx`);
+      toast(`${rotation} exported to Excel.`, "success");
+    }
+
+    function makeSpecialtyPdf(rotationOverride = els.specialtyRotation.value || "Night Float") {
+      const isAllSpecialties = rotationOverride === "__all__";
+      const rotation = rotationOverride;
+      const pdfEscape = value => String(value).replace(/[^\x20-\x7E]/g, " ").replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
+      const truncate = (value, max) => value.length > max ? `${value.slice(0, max - 1)}...` : value;
+      const rows = isAllSpecialties
+        ? ROTATIONS.flatMap(item => specialtyRows(item.name).map(row => ({ specialty: item.name, block: row.block, dates: row.dates, residents: row.residents.length ? row.residents.map(person => `${person.name} (${person.level})`).join("  ·  ") : "No residents assigned" })))
+        : specialtyRows(rotation).map(row => ({ block: row.block, dates: row.dates, residents: row.residents.length ? row.residents.map(person => `${person.name} (${person.level})`).join("  ·  ") : "No residents assigned" }));
+      const rosterRows = name => specialtyRows(name).flatMap(row => {
+        const labels = row.residents.map(person => `${person.name} (${person.level})`);
+        if (!labels.length) return [{ block: row.block, dates: row.dates, residents: "No residents assigned" }];
+        return Array.from({ length: Math.ceil(labels.length / 3) }, (_, index) => ({
+          block: index ? "" : row.block,
+          dates: index ? "" : row.dates,
+          residents: labels.slice(index * 3, (index + 1) * 3).join(" / "),
+        }));
+      });
+      const pages = (isAllSpecialties ? ROTATIONS.map(item => item.name) : [rotation]).flatMap(name => {
+        const pageRows = rosterRows(name);
+        return Array.from({ length: Math.max(1, Math.ceil(pageRows.length / 16)) }, (_, index) => ({ name, rows: pageRows.slice(index * 16, (index + 1) * 16) }));
+      });
+      const text = (value, x, y, font = "F1", size = 10, color = "0.08 0.14 0.16") => `BT /${font} ${size} Tf ${color} rg 1 0 0 1 ${x} ${y} Tm (${pdfEscape(value)}) Tj ET`;
+      const fill = (color, x, y, width, height) => `${color} rg ${x} ${y} ${width} ${height} re f`;
+      const stroke = (x, y, width, height) => `0.78 0.84 0.85 RG 0.6 w ${x} ${y} ${width} ${height} re S`;
+      const tableX = 42;
+      const columnWidths = [100, 158, 272];
+      const columnX = columnWidths.reduce((list, width) => [...list, list[list.length - 1] + width], [tableX]);
+      const pageStreams = pages.map((page, pageIndex) => {
+        const stream = [
+          fill("0.08 0.27 0.31", 0, 726, 612, 66),
+          text("JHAH RESIDENT BLOCK DISTRIBUTION", 42, 762, "F2", 15, "1 1 1"),
+          text("2027  |  Specialty resident roster", 42, 744, "F1", 9, "0.82 0.93 0.92"),
+          text(page.name, 410, 758, "F2", 13, "1 1 1"),
+          text("All blocks", 452, 742, "F1", 9, "0.82 0.93 0.92"),
+          fill("0.91 0.95 0.95", tableX, 690, 530, 27),
+          ...["BLOCK", "DATES", "ASSIGNED RESIDENTS"].map((heading, index) => text(heading, columnX[index] + 8, 700, "F2", 8, "0.08 0.27 0.31")),
+          stroke(tableX, 690, 530, 27),
+        ];
+        page.rows.forEach((row, rowIndex) => {
+          const y = 662 - rowIndex * 30;
+          if (rowIndex % 2 === 0) stream.push(fill("0.975 0.985 0.985", tableX, y, 530, 30));
+          stream.push(stroke(tableX, y, 530, 30));
+          stream.push(text(truncate(row.block, 18), columnX[0] + 8, y + 10, "F2", 10));
+          stream.push(text(truncate(row.dates, 27), columnX[1] + 8, y + 10, "F1", 10, "0.25 0.34 0.36"));
+          stream.push(text(row.residents, columnX[2] + 8, y + 10, row.residents === "No residents assigned" ? "F1" : "F2", 10));
+          columnX.slice(1, -1).forEach(x => stream.push(`0.78 0.84 0.85 RG 0.6 w ${x} ${y} m ${x} ${y + 30} l S`));
+        });
+        stream.push(`0.55 0.62 0.64 RG 0.5 w 42 48 m 570 48 l S`);
+        stream.push(text(`Generated ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}`, 42, 32, "F1", 8, "0.35 0.43 0.45"));
+        stream.push(text(`Page ${pageIndex + 1} of ${pages.length}`, 505, 32, "F1", 8, "0.35 0.43 0.45"));
+        return stream.join("\n");
+      });
+      const objects = ["<< /Type /Catalog /Pages 2 0 R >>", `<< /Type /Pages /Count ${pages.length} /Kids [${pages.map((_, index) => `${5 + index * 2} 0 R`).join(" ")}] >>`, "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>", "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>"];
+      pageStreams.forEach((stream, index) => {
+        const pageId = 5 + index * 2;
+        const contentId = pageId + 1;
+        objects.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${contentId} 0 R >>`);
+        objects.push(`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`);
+      });
+      let pdf = "%PDF-1.4\n";
+      const offsets = [0];
+      objects.forEach((object, index) => { offsets.push(pdf.length); pdf += `${index + 1} 0 obj\n${object}\nendobj\n`; });
+      const xref = pdf.length;
+      pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n${offsets.slice(1).map(offset => `${String(offset).padStart(10, "0")} 00000 n \n`).join("")}trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+      return new Blob([pdf], { type: "application/pdf" });
+    }
+
+    function exportSpecialtyPdf() {
+      const rotation = (els.specialtyRotation.value || "Night Float").replace(/[^a-z0-9]+/gi, "-");
+      downloadBlob(makeSpecialtyPdf(), `JHAH-${rotation}-Resident-Roster-All-Blocks.pdf`);
+      toast("Specialty exported to PDF.", "success");
+    }
+
+    function exportAllSpecialtiesPdf() {
+      downloadBlob(makeSpecialtyPdf("__all__"), "JHAH-All-Specialties-Resident-Roster.pdf");
+      toast("All specialties exported to one PDF.", "success");
+    }
+
+    function makeAllSpecialtiesSheetXml() {
+      const cell = (row, column, value, style = 5) => {
+        const reference = `${columnName(column)}${row}`;
+        return `<c r="${reference}" t="inlineStr" s="${style}"><is><t>${xmlEscape(value)}</t></is></c>`;
+      };
+      const sheetRows = [
+        `<row r="1" ht="30" customHeight="1">${cell(1, 1, "JHAH All Specialties Resident Roster · 2027", 1)}</row>`,
+        `<row r="2" ht="22" customHeight="1">${cell(2, 1, "Specialty", 2)}${cell(2, 2, "Block", 2)}${cell(2, 3, "Dates", 2)}${cell(2, 4, "Resident", 2)}${cell(2, 5, "Year", 2)}</row>`,
+      ];
+      let rowNumber = 3;
+      ROTATIONS.forEach(rotation => specialtyRows(rotation.name).forEach(row => {
+        if (!row.residents.length) {
+          sheetRows.push(`<row r="${rowNumber}" ht="22" customHeight="1">${cell(rowNumber, 1, rotation.name, 4)}${cell(rowNumber, 2, row.block, 4)}${cell(rowNumber, 3, row.dates, 4)}${cell(rowNumber, 4, "No residents assigned", 6)}${cell(rowNumber, 5, "", 4)}</row>`);
+          rowNumber++;
+          return;
+        }
+        row.residents.forEach((person, index) => {
+          sheetRows.push(`<row r="${rowNumber}" ht="22" customHeight="1">${cell(rowNumber, 1, index ? "" : rotation.name, 4)}${cell(rowNumber, 2, index ? "" : row.block, 4)}${cell(rowNumber, 3, index ? "" : row.dates, 4)}${cell(rowNumber, 4, person.name, 4)}${cell(rowNumber, 5, person.level, 4)}</row>`);
+          rowNumber++;
+        });
+      }));
+      return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0" showGridLines="0"><pane ySplit="2" topLeftCell="A3" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols><col min="1" max="1" width="24" customWidth="1"/><col min="2" max="2" width="14" customWidth="1"/><col min="3" max="3" width="24" customWidth="1"/><col min="4" max="4" width="22" customWidth="1"/><col min="5" max="5" width="10" customWidth="1"/></cols><sheetData>${sheetRows.join("")}</sheetData><mergeCells count="1"><mergeCell ref="A1:E1"/></mergeCells></worksheet>`;
+    }
+
+    function exportAllSpecialtiesExcel() {
+      const files = {
+        "[Content_Types].xml": `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`,
+        "_rels/.rels": `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`,
+        "xl/workbook.xml": `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="All specialties" sheetId="1" r:id="rId1"/></sheets></workbook>`,
+        "xl/_rels/workbook.xml.rels": `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`,
+        "xl/worksheets/sheet1.xml": makeAllSpecialtiesSheetXml(),
+        "xl/styles.xml": makeStylesXml(),
+      };
+      downloadBlob(makeZip(files), "JHAH-All-Specialties-Resident-Roster.xlsx");
+      toast("All specialties exported to one Excel workbook.", "success");
+    }
+
+    function exportExcel(forceFinal = false) {
+      const isFinal = forceFinal || activeView === "actual";
+      const sheetName = isFinal ? "Final Schedule" : "Requested Schedule";
+      const workbookTitle = isFinal ? "JHAH Resident Block Distribution, 2027" : "JHAH Resident Requested Block Distribution, 2027";
+      const files = {
+        "[Content_Types].xml": `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>`,
+        "_rels/.rels": `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/></Relationships>`,
+        "xl/workbook.xml": `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><bookViews><workbookView/></bookViews><sheets><sheet name="${sheetName}" sheetId="1" r:id="rId1"/></sheets><calcPr calcId="191029"/></workbook>`,
+        "xl/_rels/workbook.xml.rels": `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`,
+        "xl/worksheets/sheet1.xml": isFinal ? makeFinalSheetXml() : makeSheetXml(),
+        "xl/styles.xml": makeStylesXml(),
+        "docProps/core.xml": `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>${workbookTitle}</dc:title><dc:creator>JHAH Medical Education</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">${new Date().toISOString()}</dcterms:created></cp:coreProperties>`,
+        "docProps/app.xml": `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"><Application>JHAH Resident Block Distribution</Application></Properties>`,
+      };
+      const blob = makeZip(files);
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = isFinal ? "JHAH-Resident-Final-Distribution-2027.xlsx" : "JHAH-Resident-Requests-2027.xlsx";
+      document.body.appendChild(link);
+      link.click();
+      const href = link.href;
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(href), 1000);
+      toast(`${isFinal ? "Final" : "Requested"} schedule exported in the ${THEMES[els.theme.value].label} theme.`, "success");
+    }
+
+    document.querySelectorAll(".view-tab").forEach(tab => tab.addEventListener("click", () => setView(tab.dataset.view)));
+    els.specialtyRotation.innerHTML = ROTATIONS.map(rotation => `<option value="${escapeHtml(rotation.name)}" ${rotation.name === "Night Float" ? "selected" : ""}>${escapeHtml(rotation.name)}</option>`).join("");
+    document.querySelectorAll("[data-close-dialog]").forEach(button => button.addEventListener("click", () => document.getElementById(button.dataset.closeDialog).close()));
+    els.search.addEventListener("input", renderBody);
+    els.level.addEventListener("change", () => {
+      if (activeView === "comparison" && els.level.value === "R1") els.level.value = "all";
+      renderBody();
+    });
+    els.theme.addEventListener("change", () => { setTheme(els.theme.value); markDirty(); });
+    els.account.addEventListener("click", openResidentDialog);
+    els.chiefAccess.addEventListener("click", () => chiefSignedIn ? signOutChief() : openChiefDialog("actual"));
+    els.changeChiefPassword.addEventListener("click", openChangeChiefPasswordDialog);
+    els.residentChiefEntry.addEventListener("click", () => openChiefDialog("actual"));
+    els.chiefForm.addEventListener("submit", signInChief);
+    els.changeChiefPasswordForm.addEventListener("submit", changeChiefPassword);
+    els.editRequests.addEventListener("click", openRequestEditor);
+    els.residentSearch.addEventListener("input", renderResidentList);
+    els.residentLevel.addEventListener("change", renderResidentList);
+    els.residentList.addEventListener("click", event => {
+      const option = event.target.closest("[data-resident-id]");
+      if (option) signInResident(option.dataset.residentId);
+    });
+    els.signOut.addEventListener("click", () => {
+      signedResidentId = null;
+      els.residentDialog.close();
+      renderAccount();
+      toast("Resident session ended.");
+    });
+    els.saveRequests.addEventListener("click", saveResidentRequests);
+    els.requestList.addEventListener("click", event => {
+      const person = requestedResidents.find(item => item.id === signedResidentId);
+      if (!person || !requestDraft) return;
+      const option = event.target.closest("[data-request-value]");
+      if (option) {
+        const blockIndex = Number(option.dataset.requestBlock);
+        requestDraft[blockIndex] = option.dataset.requestValue || null;
+        renderRequestRows(person);
+        return;
+      }
+      const trigger = event.target.closest("[data-request-toggle]");
+      if (trigger) {
+        const blockIndex = Number(trigger.dataset.requestToggle);
+        const panel = els.requestList.querySelector(`[data-options-block="${blockIndex}"]`);
+        renderRequestRows(person, panel?.hidden ? blockIndex : null);
+      }
+    });
+    els.editCheck.addEventListener("click", openUnlockDialog);
+    els.unlockCheck.addEventListener("change", () => { els.confirmUnlock.disabled = !els.unlockCheck.checked; });
+    els.confirmUnlock.addEventListener("click", () => {
+      if (!els.unlockCheck.checked) return;
+      fundamentalsUnlocked = true;
+      els.unlockDialog.close();
+      render();
+      toast("Fundamental names, levels, and filled blocks are now editable.", "warn");
+    });
+    els.palette.addEventListener("click", event => {
+      const chip = event.target.closest("[data-rotation]");
+      if (!chip) return;
+      selectedRotation = chip.dataset.rotation;
+      renderPalette();
+    });
+    els.palette.addEventListener("dragstart", event => {
+      const chip = event.target.closest("[data-rotation]");
+      if (chip) event.dataTransfer.setData("text/plain", chip.dataset.rotation);
+    });
+    els.body.addEventListener("click", event => {
+      const comparisonButton = event.target.closest("[data-comparison-resident]");
+      if (comparisonButton && activeView === "comparison") {
+        const id = comparisonButton.dataset.comparisonResident;
+        if (allComparisonExpanded) {
+          allComparisonExpanded = false;
+          expandedComparisons = new Set(requestedResidents.map(person => person.id));
+          expandedComparisons.delete(id);
+        } else if (expandedComparisons.has(id)) expandedComparisons.delete(id);
+        else expandedComparisons.add(id);
+        renderBody();
+        renderControls();
+        return;
+      }
+      const button = event.target.closest("[data-block-index]");
+      if (!button || activeView !== "actual") return;
+      if (!selectedRotation) {
+        toast("Choose a rotation from the chief tray first.");
+        return;
+      }
+      applyActualRotation(Number(button.dataset.personIndex), Number(button.dataset.blockIndex), selectedRotation);
+    });
+    els.body.addEventListener("dragover", event => {
+      if (activeView === "actual" && event.target.closest("[data-drop-block]")) event.preventDefault();
+    });
+    els.body.addEventListener("drop", event => {
+      const cell = event.target.closest("[data-drop-block]");
+      if (!cell || activeView !== "actual") return;
+      event.preventDefault();
+      applyActualRotation(Number(cell.dataset.dropPerson), Number(cell.dataset.dropBlock), event.dataTransfer.getData("text/plain"));
+    });
+    els.body.addEventListener("change", event => {
+      if (!fundamentalsUnlocked || activeView !== "actual") return;
+      const input = event.target.closest("[data-field][data-person-index]");
+      if (input) updateIdentity(Number(input.dataset.personIndex), input.dataset.field, input.value);
+    });
+    els.zoomOut.addEventListener("click", () => { zoomPercent = Math.max(75, zoomPercent - (zoomPercent === 100 ? 10 : 15)); applyZoom(); renderBody(); });
+    els.zoomIn.addEventListener("click", () => { zoomPercent = Math.min(150, zoomPercent + (zoomPercent === 100 ? 10 : 15)); applyZoom(); renderBody(); });
+    els.zoomFit.addEventListener("click", () => { zoomPercent = 100; applyZoom(); renderBody(); els.shell.scrollLeft = 0; });
+    els.comparisonStatus.addEventListener("change", () => {
+      allComparisonExpanded = false;
+      expandedComparisons.clear();
+      renderBody();
+    });
+    els.comparisonSort.addEventListener("change", () => {
+      renderBody();
+      renderControls();
+    });
+    els.specialtyRotation.addEventListener("change", () => {
+      renderContext();
+      renderHead();
+      renderBody();
+      renderControls();
+    });
+    els.exportSpecialtyExcel.addEventListener("click", exportSpecialtyExcel);
+    els.exportSpecialtyPdf.addEventListener("click", exportSpecialtyPdf);
+    els.exportAllSpecialtiesExcel.addEventListener("click", exportAllSpecialtiesExcel);
+    els.exportAllSpecialtiesPdf.addEventListener("click", exportAllSpecialtiesPdf);
+    els.comparisonToggleAll.addEventListener("click", () => {
+      allComparisonExpanded = !allComparisonExpanded;
+      expandedComparisons.clear();
+      renderBody();
+      renderControls();
+    });
+    els.undo.addEventListener("click", undo);
+    els.redo.addEventListener("click", redo);
+    els.saveButton.addEventListener("click", () => saveChanges());
+    els.exportButton.addEventListener("click", exportExcel);
+    els.reset.addEventListener("click", resetBaseline);
+    document.addEventListener("keydown", event => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
+        event.preventDefault();
+        saveChanges();
+      }
+      if (activeView === "actual" && (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z" && !event.shiftKey) {
+        event.preventDefault();
+        undo();
+      }
+      if (activeView === "actual" && (event.ctrlKey || event.metaKey) && (event.key.toLowerCase() === "y" || (event.shiftKey && event.key.toLowerCase() === "z"))) {
+        event.preventDefault();
+        redo();
+      }
+    });
+
+    loadSaved();
+    restoreThemePreference();
+    render();
+  </script>
+</body>
+</html>
