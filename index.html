@@ -699,7 +699,7 @@
         <div class="cycle-brief" aria-label="Academic rotation cycle">
           <span>Academic rotation cycle</span>
           <strong>2026–2027</strong>
-          <small>38 residents · 13 four-week blocks</small>
+          <small>39 residents · 13 four-week blocks</small>
         </div>
         <div class="mast-actions">
           <span id="saveState" class="saved-indicator">Reference baseline</span>
@@ -1007,6 +1007,7 @@
       row("r4-farah", "Farah", "R4", "R3", [IM, IM, null, "Stepdown"]),
       row("r4-omar-so", "Omar So", "R4", "R3", [IM, IM, null, null, "Stepdown"]),
       row("r4-rakan", "Rakan", "R4", "R3", [IM, IM, null, null, null, "Stepdown"]),
+      row("r4-najd", "Najd", "R4", "R3", [IM, IM, null, null, null, null, "Stepdown"]),
 
       row("r3-abdulaziz", "Abdulaziz", "R3", "R2", [NF, null, IM, null, IM, null, null, null, null, null, IM]),
       row("r3-aeshah", "Aeshah", "R3", "R2", [NF, null, IM, null, IM, null, null, null, null, null, IM]),
@@ -1058,15 +1059,24 @@
     const rotationByName = name => ROTATIONS.find(rotation => rotation.name === name);
     const rotationLabel = value => value || "";
     const personIndexById = (collection, id) => collection.findIndex(person => person.id === id);
-    const normalizedPeople = source => BASELINE.map((base, index) => {
-      const candidate = source?.find?.(person => person.id === base.id) || source?.[index] || base;
-      return {
-        ...base,
-        ...candidate,
-        id: base.id,
-        assignments: [...(candidate.assignments || base.assignments), ...blank13()].slice(0, 13),
-      };
-    });
+    const normalizedPeople = source => {
+      const people = Array.isArray(source) ? source : [];
+      const hasStableIds = people.some(person => person?.id);
+      const baselineIds = new Set(BASELINE.map(person => person.id));
+      const normalizedBaseline = BASELINE.map((base, index) => {
+        const candidate = people.find(person => person?.id === base.id) || (!hasStableIds ? people[index] : null) || base;
+        return {
+          ...base,
+          ...candidate,
+          id: base.id,
+          assignments: [...(candidate.assignments || base.assignments), ...blank13()].slice(0, 13),
+        };
+      });
+      const savedAdditions = people
+        .filter(person => person?.id && !baselineIds.has(person.id))
+        .map(person => ({ ...person, assignments: [...(person.assignments || blank13()), ...blank13()].slice(0, 13) }));
+      return [...normalizedBaseline, ...savedAdditions];
+    };
 
     let chiefToken = sessionStorage.getItem("jhah-chief-token-2027") || "";
 
