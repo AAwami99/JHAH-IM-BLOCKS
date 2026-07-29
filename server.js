@@ -12,7 +12,7 @@ const readBody = req => new Promise((resolve, reject) => { let body = ''; req.on
 const tokenFor = () => { const expiry = String(Date.now() + 8 * 60 * 60 * 1000); return `${expiry}.${crypto.createHmac('sha256', secret).update(expiry).digest('hex')}`; };
 const validToken = token => { const [expiry, signature] = String(token || '').split('.'); return Number(expiry) > Date.now() && crypto.timingSafeEqual(Buffer.from(signature || ''), Buffer.from(crypto.createHmac('sha256', secret).update(expiry || '').digest('hex'))); };
 const chief = req => validToken(req.headers['x-chief-token']);
-const NAJD_BASELINE = { id: 'r4-najd', name: 'Najd', level: 'R4', endLevel: 'R3', assignments: ['Internal Medicine', 'Internal Medicine', null, null, null, null, 'Stepdown', null, null, null, null, null, null] };
+const NAJD_BASELINE = { id: 'r4-najd', name: 'Najd', level: 'R4', endLevel: 'R4', assignments: ['Internal Medicine', 'Internal Medicine', null, null, null, null, 'Stepdown', null, null, null, null, null, null] };
 const mergeNajd = residents => {
   const people = Array.isArray(residents) ? residents.map(person => ({ ...person, assignments: Array.isArray(person.assignments) ? [...person.assignments] : person.assignments })) : [];
   const existingIndex = people.findIndex(person => person?.id === NAJD_BASELINE.id || String(person?.name || '').trim().toLowerCase() === 'najd');
@@ -25,7 +25,8 @@ const mergeNajd = residents => {
   people.splice(rakanIndex >= 0 ? rakanIndex + 1 : 0, 0, { ...NAJD_BASELINE, assignments: [...NAJD_BASELINE.assignments] });
   return people;
 };
-const migrateSchedule = state => state && typeof state === 'object' ? { ...state, version: Math.max(Number(state.version) || 0, 3), requestedResidents: mergeNajd(state.requestedResidents), actualResidents: mergeNajd(state.actualResidents) } : state;
+const alignLevels = residents => residents.map(person => ({ ...person, endLevel: person.level }));
+const migrateSchedule = state => state && typeof state === 'object' ? { ...state, version: Math.max(Number(state.version) || 0, 4), requestedResidents: alignLevels(mergeNajd(state.requestedResidents)), actualResidents: alignLevels(mergeNajd(state.actualResidents)) } : state;
 async function init() { await pool.query('CREATE TABLE IF NOT EXISTS app_state (key text PRIMARY KEY, value jsonb NOT NULL, updated_at timestamptz NOT NULL DEFAULT now())'); }
 const server = http.createServer(async (req, res) => {
   try {
