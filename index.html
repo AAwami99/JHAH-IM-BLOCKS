@@ -2474,7 +2474,7 @@
     }
 
     function exportExcel(forceFinal = false) {
-      const isFinal = forceFinal || activeView === "actual";
+      const isFinal = forceFinal === true || activeView === "actual";
       const sheetName = isFinal ? "Final Schedule" : "Requested Schedule";
       const workbookTitle = isFinal ? "JHAH Resident Block Distribution, 2027" : "JHAH Resident Requested Block Distribution, 2027";
       const files = {
@@ -2648,7 +2648,7 @@
     els.undo.addEventListener("click", undo);
     els.redo.addEventListener("click", redo);
     els.saveButton.addEventListener("click", () => saveChanges());
-    els.exportButton.addEventListener("click", exportExcel);
+    els.exportButton.addEventListener("click", () => exportExcel(false));
     els.exportPdfButton.addEventListener("click", exportFinalPdf);
     els.reset.addEventListener("click", resetBaseline);
     document.addEventListener("keydown", event => {
