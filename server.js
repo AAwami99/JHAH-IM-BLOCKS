@@ -13,8 +13,9 @@ const tokenFor = () => { const expiry = String(Date.now() + 8 * 60 * 60 * 1000);
 const validToken = token => { const [expiry, signature] = String(token || '').split('.'); return Number(expiry) > Date.now() && crypto.timingSafeEqual(Buffer.from(signature || ''), Buffer.from(crypto.createHmac('sha256', secret).update(expiry || '').digest('hex'))); };
 const chief = req => validToken(req.headers['x-chief-token']);
 const NAJD_BASELINE = { id: 'r4-najd', name: 'Najd', level: 'R4', endLevel: 'R4', assignments: ['Internal Medicine', 'Internal Medicine', null, null, null, null, 'Stepdown', null, null, null, null, null, null] };
-const mergeNajd = residents => {
+const mergeNajd = (residents, deletedIds = []) => {
   const people = Array.isArray(residents) ? residents.map(person => ({ ...person, assignments: Array.isArray(person.assignments) ? [...person.assignments] : person.assignments })) : [];
+  if (deletedIds.includes(NAJD_BASELINE.id)) return people.filter(person => person?.id !== NAJD_BASELINE.id);
   const existingIndex = people.findIndex(person => person?.id === NAJD_BASELINE.id || String(person?.name || '').trim().toLowerCase() === 'najd');
   if (existingIndex >= 0) {
     const existing = people[existingIndex];
@@ -26,7 +27,11 @@ const mergeNajd = residents => {
   return people;
 };
 const alignLevels = residents => residents.map(person => ({ ...person, endLevel: person.level }));
-const migrateSchedule = state => state && typeof state === 'object' ? { ...state, version: Math.max(Number(state.version) || 0, 4), requestedResidents: alignLevels(mergeNajd(state.requestedResidents)), actualResidents: alignLevels(mergeNajd(state.actualResidents)) } : state;
+const migrateSchedule = state => {
+  if (!state || typeof state !== 'object') return state;
+  const deletedResidentIds = Array.isArray(state.deletedResidentIds) ? state.deletedResidentIds : [];
+  return { ...state, version: Math.max(Number(state.version) || 0, 5), deletedResidentIds, requestedResidents: alignLevels(mergeNajd(state.requestedResidents, deletedResidentIds)), actualResidents: alignLevels(mergeNajd(state.actualResidents, deletedResidentIds)) };
+};
 async function init() { await pool.query('CREATE TABLE IF NOT EXISTS app_state (key text PRIMARY KEY, value jsonb NOT NULL, updated_at timestamptz NOT NULL DEFAULT now())'); }
 const server = http.createServer(async (req, res) => {
   try {

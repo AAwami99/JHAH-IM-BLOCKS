@@ -521,6 +521,11 @@
     .resident-option strong { font-size: 12px; }
     .resident-option span { color: var(--muted); font-size: 11px; }
     .resident-empty { grid-column: 1 / -1; padding: 28px; color: var(--muted); text-align: center; }
+    .resident-manager-list { display: grid; gap: 7px; max-height: 390px; overflow: auto; margin-top: 12px; }
+    .resident-manager-row { display: grid; grid-template-columns: minmax(150px, 1fr) 82px auto; gap: 7px; align-items: center; padding: 8px; border: 1px solid var(--line); border-radius: 7px; background: var(--paper-2); }
+    .resident-manager-row .field-input, .resident-manager-row .field-select { min-width: 0; }
+    .resident-manager-add { display: grid; grid-template-columns: minmax(170px, 1fr) 90px auto; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 7px; background: var(--accent-soft); }
+    .resident-manager-note { margin: 9px 0 0; color: var(--muted); font-size: 10px; }
     .auth-field { display: grid; gap: 6px; }
     .auth-field span { color: var(--muted); font-size: 10px; font-weight: 760; letter-spacing: .06em; text-transform: uppercase; }
     .auth-error { min-height: 18px; margin: 7px 0 0; color: var(--danger); font-size: 11px; font-weight: 650; }
@@ -659,6 +664,7 @@
       .dialog-actions { position: sticky; bottom: 0; padding: 10px 11px; }
       .dialog-filter { grid-template-columns: 1fr 105px; }
       .resident-list { grid-template-columns: 1fr; max-height: none; }
+      .resident-manager-add, .resident-manager-row { grid-template-columns: 1fr; }
       .request-row { grid-template-columns: 1fr auto; gap: 7px 10px; padding: 10px; }
       .request-row .block-name { grid-column: 1; }
       .request-row .block-dates { grid-column: 2; justify-items: end; text-align: right; }
@@ -701,7 +707,7 @@
         <div class="cycle-brief" aria-label="Academic rotation cycle">
           <span>Academic rotation cycle</span>
           <strong>2026–2027</strong>
-          <small>39 residents · 13 four-week blocks</small>
+          <small><span id="headerResidentCount">39</span> residents · 13 four-week blocks</small>
         </div>
         <div class="mast-actions">
           <span id="saveState" class="saved-indicator">Reference baseline</span>
@@ -763,6 +769,7 @@
           <button id="undoBtn" class="button chief-action" type="button" disabled>Undo</button>
           <button id="redoBtn" class="button chief-action" type="button" disabled>Redo</button>
           <button id="editCheckBtn" class="button chief-action" type="button">Check to edit</button>
+          <button id="manageResidentsBtn" class="button chief-action" type="button">Manage residents</button>
           <button id="editRequestsBtn" class="button resident-action" type="button">Edit my requests</button>
           <button id="exportBtn" class="button" type="button">Export requested Excel</button>
           <button id="exportPdfBtn" class="button pdf-export" type="button" hidden>Export final PDF</button>
@@ -924,6 +931,26 @@
     </form>
   </dialog>
 
+  <dialog id="residentManagerDialog" aria-labelledby="residentManagerTitle">
+    <div class="dialog-head">
+      <h3 id="residentManagerTitle">Manage residents</h3>
+      <p>Add a resident, rename an existing resident, change their year, or remove them from both schedules.</p>
+    </div>
+    <div class="dialog-body">
+      <div class="resident-manager-add">
+        <input id="newResidentName" class="field-input" type="text" maxlength="60" placeholder="Resident name" autocomplete="off" />
+        <select id="newResidentLevel" class="field-select" aria-label="New resident year"><option>R4</option><option>R3</option><option>R2</option><option>R1</option></select>
+        <button id="addResidentBtn" class="button primary" type="button">Add resident</button>
+      </div>
+      <p class="resident-manager-note">New residents start with 13 open blocks. Use “Save resident changes” below to publish all updates to the shared cloud schedule.</p>
+      <div id="residentManagerList" class="resident-manager-list"></div>
+    </div>
+    <div class="dialog-actions">
+      <button class="button" type="button" data-close-dialog="residentManagerDialog">Done</button>
+      <button id="saveResidentManagementBtn" class="button primary" type="button">Save resident changes</button>
+    </div>
+  </dialog>
+
   <dialog id="requestDialog" aria-labelledby="requestDialogTitle">
     <div class="dialog-head">
       <h3 id="requestDialogTitle">Edit my requests</h3>
@@ -1077,11 +1104,11 @@
     const rotationByName = name => ROTATIONS.find(rotation => rotation.name === name);
     const rotationLabel = value => value || "";
     const personIndexById = (collection, id) => collection.findIndex(person => person.id === id);
-    const normalizedPeople = source => {
+    const normalizedPeople = (source, deletedIds = new Set()) => {
       const people = Array.isArray(source) ? source : [];
       const hasStableIds = people.some(person => person?.id);
       const baselineIds = new Set(BASELINE.map(person => person.id));
-      const normalizedBaseline = BASELINE.map((base, index) => {
+      const normalizedBaseline = BASELINE.filter(base => !deletedIds.has(base.id)).map((base, index) => {
         const candidate = people.find(person => person?.id === base.id) || (!hasStableIds ? people[index] : null) || base;
         return {
           ...base,
@@ -1092,7 +1119,7 @@
         };
       });
       const savedAdditions = people
-        .filter(person => person?.id && !baselineIds.has(person.id))
+        .filter(person => person?.id && !baselineIds.has(person.id) && !deletedIds.has(person.id))
         .map(person => ({ ...person, assignments: [...(person.assignments || blank13()), ...blank13()].slice(0, 13) }));
       return [...normalizedBaseline, ...savedAdditions];
     };
@@ -1102,6 +1129,7 @@
     let requestedResidents = cloneResidents(BASELINE);
     let actualResidents = cloneResidents(BASELINE);
     let requestMeta = {};
+    let deletedResidentIds = new Set();
     let activeView = "requested";
     let selectedRotation = null;
     let fundamentalsUnlocked = false;
@@ -1123,6 +1151,7 @@
       chiefAccess: document.getElementById("chiefAccessBtn"),
       changeChiefPassword: document.getElementById("changeChiefPasswordBtn"),
       roleState: document.getElementById("roleState"),
+      headerResidentCount: document.getElementById("headerResidentCount"),
       viewTitle: document.getElementById("viewTitle"),
       viewDescription: document.getElementById("viewDescription"),
       metrics: document.getElementById("contextMetrics"),
@@ -1183,6 +1212,13 @@
       newChiefPassword: document.getElementById("newChiefPassword"),
       confirmChiefPassword: document.getElementById("confirmChiefPassword"),
       changeChiefPasswordError: document.getElementById("changeChiefPasswordError"),
+      manageResidents: document.getElementById("manageResidentsBtn"),
+      residentManagerDialog: document.getElementById("residentManagerDialog"),
+      residentManagerList: document.getElementById("residentManagerList"),
+      newResidentName: document.getElementById("newResidentName"),
+      newResidentLevel: document.getElementById("newResidentLevel"),
+      addResident: document.getElementById("addResidentBtn"),
+      saveResidentManagement: document.getElementById("saveResidentManagementBtn"),
       requestDialog: document.getElementById("requestDialog"),
       requestTitle: document.getElementById("requestDialogTitle"),
       requestSubtitle: document.getElementById("requestDialogSubtitle"),
@@ -1214,7 +1250,7 @@
     }
 
     function serializeState(savedAt = new Date().toISOString()) {
-      return { version: 2, savedAt, requestedResidents, actualResidents, requestMeta, theme: els.theme.value };
+      return { version: 5, savedAt, requestedResidents, actualResidents, requestMeta, deletedResidentIds: [...deletedResidentIds], theme: els.theme.value };
     }
 
     async function loadSaved() {
@@ -1224,8 +1260,9 @@
           const remote = await response.json();
           if (remote.state) {
             const parsed = remote.state;
-            requestedResidents = normalizedPeople(parsed.requestedResidents);
-            actualResidents = normalizedPeople(parsed.actualResidents);
+            deletedResidentIds = new Set(Array.isArray(parsed.deletedResidentIds) ? parsed.deletedResidentIds : []);
+            requestedResidents = normalizedPeople(parsed.requestedResidents, deletedResidentIds);
+            actualResidents = normalizedPeople(parsed.actualResidents, deletedResidentIds);
             requestMeta = parsed.requestMeta && typeof parsed.requestMeta === "object" ? parsed.requestMeta : {};
             els.theme.value = THEMES[parsed.theme] ? parsed.theme : "day";
             setSavedLabel(`Shared save ${formatTimestamp(remote.savedAt || parsed.savedAt)}`, "is-saved");
@@ -1236,8 +1273,9 @@
         const current = localStorage.getItem(STORAGE_KEY);
         if (current) {
           const parsed = JSON.parse(current);
-          requestedResidents = normalizedPeople(parsed.requestedResidents);
-          actualResidents = normalizedPeople(parsed.actualResidents);
+          deletedResidentIds = new Set(Array.isArray(parsed.deletedResidentIds) ? parsed.deletedResidentIds : []);
+          requestedResidents = normalizedPeople(parsed.requestedResidents, deletedResidentIds);
+          actualResidents = normalizedPeople(parsed.actualResidents, deletedResidentIds);
           requestMeta = parsed.requestMeta && typeof parsed.requestMeta === "object" ? parsed.requestMeta : {};
           els.theme.value = THEMES[parsed.theme] ? parsed.theme : "day";
           if (parsed.savedAt) setSavedLabel(`Saved ${formatTimestamp(parsed.savedAt)}`, "is-saved");
@@ -1346,17 +1384,18 @@
     }
 
     function renderContext() {
+      els.headerResidentCount.textContent = requestedResidents.length;
       const requestedAssigned = countAssigned(requestedResidents);
       const actualAssigned = countAssigned(actualResidents);
-      const total = BASELINE.length * BLOCKS.length;
+      const total = requestedResidents.length * BLOCKS.length;
       if (activeView === "requested") {
         els.viewTitle.textContent = "Requested schedule";
         els.viewDescription.textContent = "Residents submit requests from a simple block list. Chief-set baseline blocks remain protected.";
-        els.metrics.innerHTML = metric(BASELINE.length, "Residents") + metric(BLOCKS.length, "Blocks") + metric(requestedAssigned, "Assigned") + metric(total - requestedAssigned, "Open");
+        els.metrics.innerHTML = metric(requestedResidents.length, "Residents") + metric(BLOCKS.length, "Blocks") + metric(requestedAssigned, "Assigned") + metric(total - requestedAssigned, "Open");
       } else if (activeView === "actual") {
         els.viewTitle.textContent = "Final Done by the Chief";
         els.viewDescription.textContent = "The working final schedule. Empty blocks accept repeated drag-and-drop; protected fundamentals require a checked unlock.";
-        els.metrics.innerHTML = metric(BASELINE.length, "Residents") + metric(BLOCKS.length, "Blocks") + metric(actualAssigned, "Assigned") + metric(total - actualAssigned, "Open");
+        els.metrics.innerHTML = metric(actualResidents.length, "Residents") + metric(BLOCKS.length, "Blocks") + metric(actualAssigned, "Assigned") + metric(total - actualAssigned, "Open");
       } else if (activeView === "comparison") {
         const eligibleIndexes = requestedResidents.map((person, index) => ({ person, index })).filter(({ person }) => person.level !== "R1");
         const scores = eligibleIndexes.map(({ index }) => comparisonForPerson(index));
@@ -1500,7 +1539,7 @@
       const rows = filteredIndexes();
       if (activeView === "comparison" || activeView === "specialty") {
         els.body.innerHTML = renderComparisonBody(rows);
-        els.visibleStatus.textContent = `Showing ${rows.length} of ${BASELINE.length} resident comparison scores`;
+        els.visibleStatus.textContent = `Showing ${rows.length} of ${requestedResidents.filter(person => person.level !== "R1").length} resident comparison scores`;
         return;
       }
       let previousLevel = null;
@@ -1525,7 +1564,7 @@
           <td class="identity-cell end-cell">${escapeHtml(person.name)}</td>
         </tr>`;
       }).join("");
-      els.visibleStatus.textContent = `Showing ${rows.length} of ${BASELINE.length} residents · all 13 blocks ${zoomPercent === 100 ? "fit by default" : `at ${zoomPercent}%`}`;
+      els.visibleStatus.textContent = `Showing ${rows.length} of ${requestedResidents.length} residents · all 13 blocks ${zoomPercent === 100 ? "fit by default" : `at ${zoomPercent}%`}`;
     }
 
     function showSummaryHover(cell) {
@@ -1728,12 +1767,14 @@
     }
 
     function stateSnapshot() {
-      return { requestedResidents: cloneResidents(requestedResidents), actualResidents: cloneResidents(actualResidents) };
+      return { requestedResidents: cloneResidents(requestedResidents), actualResidents: cloneResidents(actualResidents), requestMeta: JSON.parse(JSON.stringify(requestMeta)), deletedResidentIds: [...deletedResidentIds] };
     }
 
     function restoreSnapshot(snapshot) {
       requestedResidents = cloneResidents(snapshot.requestedResidents);
       actualResidents = cloneResidents(snapshot.actualResidents);
+      requestMeta = JSON.parse(JSON.stringify(snapshot.requestMeta || {}));
+      deletedResidentIds = new Set(snapshot.deletedResidentIds || []);
     }
 
     function commitActual(mutator) {
@@ -1772,6 +1813,60 @@
       const nextValue = rotation === "__clear__" ? null : rotation;
       if (person.assignments[blockIndex] === nextValue) return;
       commitActual(() => { actualResidents[personIndex].assignments[blockIndex] = nextValue; });
+    }
+
+    function renderResidentManager() {
+      const levelOptions = selected => ["R4", "R3", "R2", "R1"].map(level => `<option ${level === selected ? "selected" : ""}>${level}</option>`).join("");
+      els.residentManagerList.innerHTML = actualResidents.length ? actualResidents.map(person => `<div class="resident-manager-row" data-manager-resident="${escapeHtml(person.id)}"><input class="field-input" type="text" maxlength="60" value="${escapeHtml(person.name)}" aria-label="Resident name" data-manager-name /><select class="field-select" aria-label="Training year" data-manager-level>${levelOptions(person.level)}</select><button class="button danger" type="button" data-manager-remove>Remove</button></div>`).join("") : `<div class="resident-empty">No residents are currently listed.</div>`;
+    }
+
+    function openResidentManager() {
+      if (!chiefSignedIn) return;
+      els.newResidentName.value = "";
+      els.newResidentLevel.value = "R4";
+      renderResidentManager();
+      els.residentManagerDialog.showModal();
+      setTimeout(() => els.newResidentName.focus(), 0);
+    }
+
+    function addResident() {
+      const name = els.newResidentName.value.trim();
+      const level = els.newResidentLevel.value;
+      if (!name) { toast("Enter the resident's name.", "warn"); els.newResidentName.focus(); return; }
+      if (requestedResidents.some(person => person.name.toLowerCase() === name.toLowerCase())) { toast("A resident with this name already exists.", "warn"); return; }
+      const id = `resident-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const person = { id, name, level, endLevel: level, assignments: blank13() };
+      commitActual(() => {
+        requestedResidents.push({ ...person, assignments: blank13() });
+        actualResidents.push({ ...person, assignments: blank13() });
+      });
+      els.newResidentName.value = "";
+      renderResidentManager();
+      toast(`${name} added with 13 open blocks.`, "success");
+    }
+
+    function updateManagedResident(id, field, value) {
+      const clean = value.trim();
+      const index = personIndexById(actualResidents, id);
+      if (index < 0 || !clean) { toast("Resident names and years cannot be blank.", "warn"); renderResidentManager(); return; }
+      if (field === "name" && requestedResidents.some(person => person.id !== id && person.name.toLowerCase() === clean.toLowerCase())) { toast("A resident with this name already exists.", "warn"); renderResidentManager(); return; }
+      if (actualResidents[index][field] === clean) return;
+      updateIdentity(index, field, clean);
+      renderResidentManager();
+    }
+
+    function removeManagedResident(id) {
+      const person = actualResidents.find(item => item.id === id);
+      if (!person || !confirm(`Remove ${person.name} from both Requested and Final schedules? Their saved requests and all 13 block assignments will be deleted when you save resident changes.`)) return;
+      commitActual(() => {
+        requestedResidents = requestedResidents.filter(item => item.id !== id);
+        actualResidents = actualResidents.filter(item => item.id !== id);
+        deletedResidentIds.add(id);
+        delete requestMeta[id];
+        if (signedResidentId === id) signedResidentId = null;
+      });
+      renderResidentManager();
+      toast(`${person.name} removed.`, "warn");
     }
 
     function openResidentDialog() {
@@ -1901,6 +1996,7 @@
       requestedResidents = cloneResidents(BASELINE);
       actualResidents = cloneResidents(BASELINE);
       requestMeta = {};
+      deletedResidentIds = new Set();
       signedResidentId = null;
       chiefSignedIn = false;
       selectedRotation = null;
@@ -2415,6 +2511,23 @@
     els.account.addEventListener("click", openResidentDialog);
     els.chiefAccess.addEventListener("click", () => chiefSignedIn ? signOutChief() : openChiefDialog("actual"));
     els.changeChiefPassword.addEventListener("click", openChangeChiefPasswordDialog);
+    els.manageResidents.addEventListener("click", openResidentManager);
+    els.addResident.addEventListener("click", addResident);
+    els.saveResidentManagement.addEventListener("click", async () => {
+      await saveChanges("Resident list saved for everyone using this link.");
+      if (!dirty) els.residentManagerDialog.close();
+    });
+    els.newResidentName.addEventListener("keydown", event => { if (event.key === "Enter") { event.preventDefault(); addResident(); } });
+    els.residentManagerList.addEventListener("change", event => {
+      const row = event.target.closest("[data-manager-resident]");
+      if (!row) return;
+      if (event.target.matches("[data-manager-name]")) updateManagedResident(row.dataset.managerResident, "name", event.target.value);
+      if (event.target.matches("[data-manager-level]")) updateManagedResident(row.dataset.managerResident, "level", event.target.value);
+    });
+    els.residentManagerList.addEventListener("click", event => {
+      const row = event.target.closest("[data-manager-resident]");
+      if (row && event.target.closest("[data-manager-remove]")) removeManagedResident(row.dataset.managerResident);
+    });
     els.residentChiefEntry.addEventListener("click", () => openChiefDialog("actual"));
     els.chiefForm.addEventListener("submit", signInChief);
     els.changeChiefPasswordForm.addEventListener("submit", changeChiefPassword);
