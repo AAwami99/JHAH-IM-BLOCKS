@@ -533,7 +533,7 @@
     .request-list { display: grid; gap: 8px; }
     .request-row {
       display: grid;
-      grid-template-columns: 76px minmax(130px, 1fr) minmax(210px, 1.4fr) 100px;
+      grid-template-columns: 76px minmax(210px, 1fr) minmax(210px, 1.4fr) 100px;
       align-items: center;
       gap: 10px;
       min-height: 54px;
@@ -543,7 +543,10 @@
       background: var(--paper);
     }
     .request-row .block-name { font-weight: 760; }
-    .request-row .block-dates { color: var(--muted); font-size: 11px; }
+    .request-row .block-dates { display: grid; gap: 3px; color: var(--muted); font-size: 11px; line-height: 1.25; }
+    .request-row .gregorian-date { font-weight: 560; }
+    .request-row .hijri-date { display: flex; align-items: center; gap: 5px; color: var(--accent-strong); font-size: 10px; font-weight: 720; }
+    .request-row .hijri-date::before { content: "هجري"; flex: none; padding: 2px 5px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-strong); font-size: 8px; font-weight: 850; line-height: 1; }
     .request-choice {
       display: flex;
       align-items: center;
@@ -659,7 +662,7 @@
       .resident-list { grid-template-columns: 1fr; max-height: none; }
       .request-row { grid-template-columns: 1fr auto; gap: 7px 10px; padding: 10px; }
       .request-row .block-name { grid-column: 1; }
-      .request-row .block-dates { grid-column: 2; text-align: right; }
+      .request-row .block-dates { grid-column: 2; justify-items: end; text-align: right; }
       .request-choice { grid-column: 1 / -1; min-height: 44px; }
       .lock-label { grid-column: 1 / -1; text-align: left; }
       .request-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -971,6 +974,22 @@
       ["Block 11", "Jul 5–Aug 1"],
       ["Block 12", "Aug 2–Aug 29"],
       ["Block 13", "Aug 30–Sept 26"],
+    ];
+
+    const HIJRI_BLOCK_DATES = [
+      "17 ربيع الآخر 1448 هـ — 14 جمادى الأولى 1448 هـ",
+      "15 جمادى الأولى 1448 هـ — 12 جمادى الآخرة 1448 هـ",
+      "13 جمادى الآخرة 1448 هـ — 11 رجب 1448 هـ",
+      "12 رجب 1448 هـ — 9 شعبان 1448 هـ",
+      "10 شعبان 1448 هـ — 7 رمضان 1448 هـ",
+      "8 رمضان 1448 هـ — 6 شوال 1448 هـ",
+      "7 شوال 1448 هـ — 4 ذو القعدة 1448 هـ",
+      "5 ذو القعدة 1448 هـ — 3 ذو الحجة 1448 هـ",
+      "4 ذو الحجة 1448 هـ — 1 محرم 1449 هـ",
+      "2 محرم 1449 هـ — 29 محرم 1449 هـ",
+      "1 صفر 1449 هـ — 28 صفر 1449 هـ",
+      "29 صفر 1449 هـ — 27 ربيع الأول 1449 هـ",
+      "28 ربيع الأول 1449 هـ — 25 ربيع الآخر 1449 هـ",
     ];
 
     const ROTATIONS = [
@@ -1804,7 +1823,7 @@
         const value = requestDraft[blockIndex] || "";
         return `<div class="request-row">
           <span class="block-name">${escapeHtml(block)}</span>
-          <span class="block-dates">${escapeHtml(dates)}</span>
+          <span class="block-dates"><span class="gregorian-date">${escapeHtml(dates)}</span><span class="hijri-date" lang="ar" dir="rtl">${escapeHtml(HIJRI_BLOCK_DATES[blockIndex])}</span></span>
           ${requestChoice(value, blockIndex, isProtected)}
           <span class="lock-label ${isProtected ? "" : "is-open"}">${isProtected ? "Chief-set" : "Resident choice"}</span>
           ${isProtected ? "" : requestOptions(value, blockIndex, openBlock === blockIndex)}
