@@ -1436,7 +1436,7 @@
         <th scope="col" rowspan="2">Resident</th>
         <th scope="col" rowspan="2">Year</th>
         ${BLOCKS.map(([label]) => `<th scope="col">${escapeHtml(label.replace("Block ", "B"))}</th>`).join("")}
-        <th scope="col" rowspan="2">Next</th>
+        <th scope="col" rowspan="2">Year</th>
         <th scope="col" rowspan="2">Resident</th>
       </tr><tr>${BLOCKS.map(([, dates]) => `<th scope="col" title="${escapeHtml(dates)}">${escapeHtml(dates)}</th>`).join("")}</tr>`;
     }
