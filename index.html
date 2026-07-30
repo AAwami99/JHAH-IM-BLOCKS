@@ -292,6 +292,36 @@
     html[data-theme="night"] .mode-pill.is-open { background: #3b3324; }
 
     .table-shell { width: 100%; overflow-x: auto; overflow-y: visible; background: var(--paper); }
+    .mobile-schedule { display: none; }
+    .mobile-resident-list { display: grid; gap: 10px; }
+    .mobile-resident-card { overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); box-shadow: 0 3px 12px rgba(20, 47, 51, .06); }
+    .mobile-resident-card > summary { list-style: none; cursor: pointer; }
+    .mobile-resident-card > summary::-webkit-details-marker { display: none; }
+    .mobile-resident-summary { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; min-height: 58px; padding: 10px 12px; }
+    .mobile-resident-summary::before { content: "+"; display: grid; place-items: center; width: 24px; height: 24px; border: 1px solid var(--line-strong); border-radius: 50%; color: var(--accent-strong); font-size: 16px; font-weight: 700; }
+    .mobile-resident-card[open] .mobile-resident-summary::before { content: "−"; }
+    .mobile-resident-identity strong, .mobile-resident-identity small { display: block; }
+    .mobile-resident-identity strong { color: var(--ink); font-size: 14px; }
+    .mobile-resident-identity small { margin-top: 2px; color: var(--muted); font-size: 9px; }
+    .mobile-block-list { display: grid; gap: 1px; padding: 1px 10px 10px; background: var(--line); border-top: 1px solid var(--line); }
+    .mobile-block-row { display: grid; grid-template-columns: minmax(84px, .8fr) minmax(150px, 1.4fr); align-items: stretch; gap: 1px; background: var(--line); }
+    .mobile-block-meta { display: grid; align-content: center; min-height: 48px; padding: 7px 8px; background: var(--paper-2); }
+    .mobile-block-meta strong, .mobile-block-meta span { display: block; }
+    .mobile-block-meta strong { font-size: 10px; }
+    .mobile-block-meta span { margin-top: 2px; color: var(--muted); font-size: 8px; line-height: 1.25; }
+    .mobile-assignment { position: relative; display: grid; place-items: center; width: 100%; min-height: 48px; padding: 7px 9px; border: 0; background: var(--rotation-fill, var(--paper)); color: var(--rotation-ink, var(--muted)); font-size: 10px; font-weight: 750; text-align: center; }
+    button.mobile-assignment { cursor: pointer; }
+    .mobile-assignment.is-empty { border: 1px dashed var(--line-strong); background: var(--paper); color: var(--muted); }
+    .mobile-assignment.is-protected::after { content: ""; position: absolute; top: 6px; right: 6px; width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: .45; }
+    .mobile-specialty-list { display: grid; gap: 9px; }
+    .mobile-specialty-card { padding: 11px; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); }
+    .mobile-specialty-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+    .mobile-specialty-head strong { font-size: 12px; }
+    .mobile-specialty-head span { color: var(--muted); font-size: 9px; }
+    .mobile-specialty-card .specialty-roster { display: block; padding: 0 !important; }
+    .mobile-comparison-card .mobile-resident-summary { grid-template-columns: auto 1fr auto; }
+    .mobile-comparison-score { color: var(--accent-strong); font-size: 19px; font-weight: 850; }
+    .mobile-comparison-detail { padding: 10px; border-top: 1px solid var(--line); background: var(--paper-2); }
     .schedule-table {
       width: var(--table-width, 100%);
       min-width: var(--table-min-width, 100%);
@@ -651,13 +681,16 @@
       .rotation-panel, .schedule-card { border-left: 0; border-right: 0; }
       .card-bar { align-items: flex-start; padding: 10px; }
       .card-bar-actions { flex-wrap: wrap; justify-content: flex-end; }
+      .table-shell { display: none; }
+      .mobile-schedule { display: block; padding: 10px; background: var(--canvas); }
       .schedule-table { min-width: 1040px !important; width: 1040px !important; font-size: 9px !important; }
       .schedule-table.is-comparison { min-width: 0 !important; width: 100% !important; font-size: 10px !important; }
       .comparison-summary-row { height: 58px !important; }
       .comparison-score { grid-template-columns: 58px minmax(90px, 1fr) auto; gap: 8px; }
       .comparison-percent { font-size: 19px; }
       .difference-grid { grid-template-columns: 1fr; }
-      .summary-card { margin-top: 8px; border-left: 0; border-right: 0; border-radius: 0; box-shadow: none; }
+      .summary-card { display: none; }
+      .zoom-control { display: none; }
       .utility-footer { padding: 0 10px 14px; }
       dialog { width: 100vw; max-width: none; height: 100dvh; max-height: none; margin: 0; border: 0; border-radius: 0; }
       .dialog-head { padding: 14px 13px 12px; }
@@ -838,6 +871,7 @@
             <tbody id="scheduleBody"></tbody>
           </table>
         </div>
+        <div id="mobileSchedule" class="mobile-schedule" aria-label="Mobile resident rotation schedule"></div>
         <div id="tableNote" class="table-note">Requested blocks are read-only here. Sign in, select your profile, and use the 13-block list to edit only your own requests.</div>
       </section>
     </section>
@@ -1141,6 +1175,7 @@
     let dirty = false;
     let zoomPercent = 100;
     let expandedComparisons = new Set();
+    let mobileExpandedResidents = new Set();
     let allComparisonExpanded = false;
     let undoStack = [];
     let redoStack = [];
@@ -1189,6 +1224,7 @@
       exportAllSpecialtiesPdf: document.getElementById("exportAllSpecialtiesPdf"),
       table: document.getElementById("scheduleTable"),
       shell: document.getElementById("scheduleShell"),
+      mobileSchedule: document.getElementById("mobileSchedule"),
       head: document.getElementById("scheduleHead"),
       body: document.getElementById("scheduleBody"),
       tableNote: document.getElementById("tableNote"),
@@ -1526,7 +1562,46 @@
       }).join("");
     }
 
+    function mobileAssignment(person, personIndex, blockIndex, value) {
+      const protectedCell = fundamentalCells.has(`${person.id}:${blockIndex}`);
+      const style = rotationStyle(value);
+      const label = value || "Open block";
+      if (activeView === "actual") {
+        return `<button class="mobile-assignment ${value ? "" : "is-empty"} ${protectedCell ? "is-protected" : ""}" type="button" data-person-index="${personIndex}" data-block-index="${blockIndex}" style="${style}" aria-label="${escapeHtml(`${BLOCKS[blockIndex][0]}: ${label}`)}">${escapeHtml(label)}</button>`;
+      }
+      return `<span class="mobile-assignment ${value ? "" : "is-empty"} ${protectedCell ? "is-protected" : ""}" style="${style}">${escapeHtml(label)}</span>`;
+    }
+
+    function renderMobileSchedule() {
+      if (activeView === "specialty") {
+        const rotation = els.specialtyRotation.value || "Night Float";
+        els.mobileSchedule.innerHTML = `<div class="mobile-specialty-list">${BLOCKS.map(([block, dates], blockIndex) => {
+          const residents = actualResidents.filter(person => person.assignments[blockIndex] === rotation);
+          const roster = residents.length ? residents.map(person => `<span class="resident-chip">${escapeHtml(person.name)} <small>${escapeHtml(person.level)}</small></span>`).join("") : `<span class="specialty-empty">No residents assigned</span>`;
+          return `<section class="mobile-specialty-card"><div class="mobile-specialty-head"><div><strong>${escapeHtml(block)}</strong><span>${escapeHtml(dates)}</span></div><span>${residents.length} resident${residents.length === 1 ? "" : "s"}</span></div><div class="specialty-roster">${roster}</div></section>`;
+        }).join("")}</div>`;
+        return;
+      }
+
+      const rows = filteredIndexes();
+      if (activeView === "comparison") {
+        els.mobileSchedule.innerHTML = rows.length ? `<div class="mobile-resident-list">${rows.map(({ person, index }) => {
+          const comparison = comparisonForPerson(index);
+          const details = comparison.differences.length ? `<div class="difference-grid">${comparison.differences.map(differenceCard).join("")}</div>` : `<div class="no-differences">The requested and actual schedules match in all 13 blocks.</div>`;
+          return `<details class="mobile-resident-card mobile-comparison-card" data-mobile-resident="${escapeHtml(person.id)}" ${mobileExpandedResidents.has(person.id) ? "open" : ""}><summary class="mobile-resident-summary"><span class="mobile-resident-identity"><strong>${escapeHtml(person.name)}</strong><small>${escapeHtml(person.level)} · ${comparison.differences.length} difference${comparison.differences.length === 1 ? "" : "s"}</small></span><span class="mobile-comparison-score ${comparisonPercentClass(comparison.percentage)}">${comparison.percentage}%</span></summary><div class="mobile-comparison-detail">${details}</div></details>`;
+        }).join("")}</div>` : `<div class="resident-empty">No residents match the current filters.</div>`;
+        return;
+      }
+
+      els.mobileSchedule.innerHTML = rows.length ? `<div class="mobile-resident-list">${rows.map(({ person, index }) => {
+        const assigned = person.assignments.filter(Boolean).length;
+        const blocks = BLOCKS.map(([block, dates], blockIndex) => `<div class="mobile-block-row"><div class="mobile-block-meta"><strong>${escapeHtml(block)}</strong><span>${escapeHtml(dates)}</span></div>${mobileAssignment(person, index, blockIndex, person.assignments[blockIndex])}</div>`).join("");
+        return `<details class="mobile-resident-card" data-mobile-resident="${escapeHtml(person.id)}" ${mobileExpandedResidents.has(person.id) ? "open" : ""}><summary class="mobile-resident-summary"><span class="mobile-resident-identity"><strong>${escapeHtml(person.name)}</strong><small>${assigned} assigned · ${BLOCKS.length - assigned} open</small></span>${levelBadge(person.level)}</summary><div class="mobile-block-list">${blocks}</div></details>`;
+      }).join("")}</div>` : `<div class="resident-empty">No residents match the current filters.</div>`;
+    }
+
     function renderBody() {
+      renderMobileSchedule();
       if (activeView === "specialty") {
         const rotation = els.specialtyRotation.value || "Night Float";
         els.body.innerHTML = BLOCKS.map(([block, dates], blockIndex) => {
@@ -2594,6 +2669,21 @@
         else expandedComparisons.add(id);
         renderBody();
         renderControls();
+        return;
+      }
+      const button = event.target.closest("[data-block-index]");
+      if (!button || activeView !== "actual") return;
+      if (!selectedRotation) {
+        toast("Choose a rotation from the chief tray first.");
+        return;
+      }
+      applyActualRotation(Number(button.dataset.personIndex), Number(button.dataset.blockIndex), selectedRotation);
+    });
+    els.mobileSchedule.addEventListener("click", event => {
+      const summary = event.target.closest("summary");
+      if (summary) {
+        const card = summary.closest("[data-mobile-resident]");
+        if (card) setTimeout(() => card.open ? mobileExpandedResidents.add(card.dataset.mobileResident) : mobileExpandedResidents.delete(card.dataset.mobileResident), 0);
         return;
       }
       const button = event.target.closest("[data-block-index]");
