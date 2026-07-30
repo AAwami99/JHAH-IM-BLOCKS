@@ -30,7 +30,7 @@ const alignLevels = residents => residents.map(person => ({ ...person, endLevel:
 const migrateSchedule = state => {
   if (!state || typeof state !== 'object') return state;
   const deletedResidentIds = Array.isArray(state.deletedResidentIds) ? state.deletedResidentIds : [];
-  return { ...state, version: Math.max(Number(state.version) || 0, 5), deletedResidentIds, requestedResidents: alignLevels(mergeNajd(state.requestedResidents, deletedResidentIds)), actualResidents: alignLevels(mergeNajd(state.actualResidents, deletedResidentIds)) };
+  return { ...state, version: Math.max(Number(state.version) || 0, 6), deletedResidentIds, requestedResidents: alignLevels(mergeNajd(state.requestedResidents, deletedResidentIds)), actualResidents: alignLevels(mergeNajd(state.actualResidents, deletedResidentIds)) };
 };
 async function init() { await pool.query('CREATE TABLE IF NOT EXISTS app_state (key text PRIMARY KEY, value jsonb NOT NULL, updated_at timestamptz NOT NULL DEFAULT now())'); }
 const server = http.createServer(async (req, res) => {

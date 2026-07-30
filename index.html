@@ -561,6 +561,16 @@
     .resident-manager-row .field-input, .resident-manager-row .field-select { min-width: 0; }
     .resident-manager-add { display: grid; grid-template-columns: minmax(170px, 1fr) 90px auto; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 7px; background: var(--accent-soft); }
     .resident-manager-note { margin: 9px 0 0; color: var(--muted); font-size: 10px; }
+    .fundamental-manager-controls { display: grid; grid-template-columns: 1fr 1.4fr; gap: 9px; }
+    .fundamental-manager-controls label { display: grid; gap: 4px; color: var(--muted); font-size: 9px; font-weight: 760; }
+    .fundamental-editor-list { display: grid; gap: 7px; margin-top: 12px; }
+    .fundamental-editor-row { display: grid; grid-template-columns: minmax(118px, .8fr) minmax(190px, 1.3fr) 118px; align-items: center; gap: 8px; padding: 8px; border: 1px solid var(--line); border-radius: 7px; background: var(--paper); }
+    .fundamental-editor-row.is-fundamental { border-color: var(--accent); background: var(--accent-soft); }
+    .fundamental-block-meta strong, .fundamental-block-meta span { display: block; }
+    .fundamental-block-meta strong { font-size: 11px; }
+    .fundamental-block-meta span { margin-top: 2px; color: var(--muted); font-size: 8px; }
+    .fundamental-toggle { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; padding: 6px 8px; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--paper-2); font-size: 9px; font-weight: 780; }
+    .fundamental-rotation-select { border-color: var(--choice-border, var(--line-strong)); background: var(--choice-fill, var(--paper)); color: var(--choice-ink, var(--ink)); font-weight: 720; }
     .auth-field { display: grid; gap: 6px; }
     .auth-field span { color: var(--muted); font-size: 10px; font-weight: 760; letter-spacing: .06em; text-transform: uppercase; }
     .auth-error { min-height: 18px; margin: 7px 0 0; color: var(--danger); font-size: 11px; font-weight: 650; }
@@ -728,6 +738,9 @@
       .dialog-filter { grid-template-columns: 1fr 105px; }
       .resident-list { grid-template-columns: 1fr; max-height: none; }
       .resident-manager-add, .resident-manager-row { grid-template-columns: 1fr; }
+      .fundamental-manager-controls { grid-template-columns: 1fr; }
+      .fundamental-editor-row { grid-template-columns: 94px minmax(0, 1fr); }
+      .fundamental-toggle { grid-column: 1 / -1; justify-content: flex-start; }
       .request-row { grid-template-columns: 1fr auto; gap: 7px 10px; padding: 10px; }
       .request-row .block-name { grid-column: 1; }
       .request-row .block-dates { grid-column: 2; justify-items: end; text-align: right; }
@@ -833,6 +846,7 @@
           <button id="redoBtn" class="button chief-action" type="button" disabled>Redo</button>
           <button id="editCheckBtn" class="button chief-action" type="button">Check to edit</button>
           <button id="manageResidentsBtn" class="button chief-action" type="button">Manage residents</button>
+          <button id="manageFundamentalsBtn" class="button" type="button" hidden>Manage fundamentals</button>
           <button id="editRequestsBtn" class="button resident-action" type="button">Edit my requests</button>
           <button id="exportBtn" class="button" type="button">Export requested Excel</button>
           <button id="exportPdfBtn" class="button pdf-export" type="button" hidden>Export final PDF</button>
@@ -1022,6 +1036,25 @@
     </div>
   </dialog>
 
+  <dialog id="fundamentalManagerDialog" aria-labelledby="fundamentalManagerTitle">
+    <div class="dialog-head">
+      <h3 id="fundamentalManagerTitle">Manage fundamentals</h3>
+      <p>Choose either schedule, then change rotations and decide exactly which filled blocks residents or chiefs must treat as fundamental.</p>
+    </div>
+    <div class="dialog-body">
+      <div class="fundamental-manager-controls">
+        <label>Schedule<select id="fundamentalScheduleSelect" class="field-select"><option value="requested">Requested</option><option value="actual">Final Done by the Chief</option></select></label>
+        <label>Resident<select id="fundamentalResidentSelect" class="field-select"></select></label>
+      </div>
+      <p class="resident-manager-note">Changing a rotation does not change its fundamental status. Clear the checkbox to make it editable, or check it to protect the selected rotation.</p>
+      <div id="fundamentalEditorList" class="fundamental-editor-list"></div>
+    </div>
+    <div class="dialog-actions">
+      <button class="button" type="button" data-close-dialog="fundamentalManagerDialog">Cancel</button>
+      <button id="saveFundamentalChangesBtn" class="button primary" type="button">Save fundamental changes</button>
+    </div>
+  </dialog>
+
   <dialog id="requestDialog" aria-labelledby="requestDialogTitle">
     <div class="dialog-head">
       <h3 id="requestDialogTitle">Edit my requests</h3>
@@ -1165,9 +1198,9 @@
 
     const STORAGE_KEY = "jhah-resident-block-distribution-2027-v2";
     const LEGACY_KEY = "jhah-resident-block-distribution-2027-v1";
-    const fundamentalCells = new Set();
+    const BASELINE_FUNDAMENTAL_CELLS = new Set();
     BASELINE.forEach(person => person.assignments.forEach((value, index) => {
-      if (value) fundamentalCells.add(`${person.id}:${index}`);
+      if (value) BASELINE_FUNDAMENTAL_CELLS.add(`${person.id}:${index}`);
     }));
 
     const cloneResidents = source => source.map(person => ({ ...person, assignments: [...person.assignments] }));
@@ -1201,6 +1234,8 @@
     let actualResidents = cloneResidents(BASELINE);
     let requestMeta = {};
     let deletedResidentIds = new Set();
+    let requestedFundamentalCells = new Set(BASELINE_FUNDAMENTAL_CELLS);
+    let actualFundamentalCells = new Set(BASELINE_FUNDAMENTAL_CELLS);
     let activeView = "requested";
     let selectedRotation = null;
     let fundamentalsUnlocked = false;
@@ -1208,6 +1243,7 @@
     let chiefSignedIn = false;
     let pendingChiefView = null;
     let requestDraft = null;
+    let fundamentalDraft = null;
     let dirty = false;
     let zoomPercent = 100;
     let mobileScheduleMode = "cards";
@@ -1240,6 +1276,7 @@
       undo: document.getElementById("undoBtn"),
       redo: document.getElementById("redoBtn"),
       editCheck: document.getElementById("editCheckBtn"),
+      manageFundamentals: document.getElementById("manageFundamentalsBtn"),
       editRequests: document.getElementById("editRequestsBtn"),
       exportButton: document.getElementById("exportBtn"),
       exportPdfButton: document.getElementById("exportPdfBtn"),
@@ -1296,6 +1333,11 @@
       newResidentLevel: document.getElementById("newResidentLevel"),
       addResident: document.getElementById("addResidentBtn"),
       saveResidentManagement: document.getElementById("saveResidentManagementBtn"),
+      fundamentalManagerDialog: document.getElementById("fundamentalManagerDialog"),
+      fundamentalSchedule: document.getElementById("fundamentalScheduleSelect"),
+      fundamentalResident: document.getElementById("fundamentalResidentSelect"),
+      fundamentalEditorList: document.getElementById("fundamentalEditorList"),
+      saveFundamentalChanges: document.getElementById("saveFundamentalChangesBtn"),
       requestDialog: document.getElementById("requestDialog"),
       requestTitle: document.getElementById("requestDialogTitle"),
       requestSubtitle: document.getElementById("requestDialogSubtitle"),
@@ -1327,7 +1369,7 @@
     }
 
     function serializeState(savedAt = new Date().toISOString()) {
-      return { version: 5, savedAt, requestedResidents, actualResidents, requestMeta, deletedResidentIds: [...deletedResidentIds], theme: els.theme.value };
+      return { version: 6, savedAt, requestedResidents, actualResidents, requestMeta, deletedResidentIds: [...deletedResidentIds], requestedFundamentalCells: [...requestedFundamentalCells], actualFundamentalCells: [...actualFundamentalCells], theme: els.theme.value };
     }
 
     async function loadSaved() {
@@ -1341,6 +1383,8 @@
             requestedResidents = normalizedPeople(parsed.requestedResidents, deletedResidentIds);
             actualResidents = normalizedPeople(parsed.actualResidents, deletedResidentIds);
             requestMeta = parsed.requestMeta && typeof parsed.requestMeta === "object" ? parsed.requestMeta : {};
+            requestedFundamentalCells = new Set(Array.isArray(parsed.requestedFundamentalCells) ? parsed.requestedFundamentalCells : BASELINE_FUNDAMENTAL_CELLS);
+            actualFundamentalCells = new Set(Array.isArray(parsed.actualFundamentalCells) ? parsed.actualFundamentalCells : BASELINE_FUNDAMENTAL_CELLS);
             els.theme.value = THEMES[parsed.theme] ? parsed.theme : "day";
             setSavedLabel(`Shared save ${formatTimestamp(remote.savedAt || parsed.savedAt)}`, "is-saved");
             render();
@@ -1354,6 +1398,8 @@
           requestedResidents = normalizedPeople(parsed.requestedResidents, deletedResidentIds);
           actualResidents = normalizedPeople(parsed.actualResidents, deletedResidentIds);
           requestMeta = parsed.requestMeta && typeof parsed.requestMeta === "object" ? parsed.requestMeta : {};
+          requestedFundamentalCells = new Set(Array.isArray(parsed.requestedFundamentalCells) ? parsed.requestedFundamentalCells : BASELINE_FUNDAMENTAL_CELLS);
+          actualFundamentalCells = new Set(Array.isArray(parsed.actualFundamentalCells) ? parsed.actualFundamentalCells : BASELINE_FUNDAMENTAL_CELLS);
           els.theme.value = THEMES[parsed.theme] ? parsed.theme : "day";
           if (parsed.savedAt) setSavedLabel(`Saved ${formatTimestamp(parsed.savedAt)}`, "is-saved");
           return;
@@ -1543,7 +1589,7 @@
     }
 
     function assignmentCell(person, personIndex, blockIndex, value) {
-      const protectedCell = fundamentalCells.has(`${person.id}:${blockIndex}`);
+      const protectedCell = (activeView === "actual" ? actualFundamentalCells : requestedFundamentalCells).has(`${person.id}:${blockIndex}`);
       const rotation = rotationByName(value);
       const style = rotationStyle(value);
       const responsiveLabel = value ? `<span class="desktop-rotation-label">${escapeHtml(rotationLabel(value))}</span><span class="mobile-rotation-label">${escapeHtml(rotation?.short || value)}</span>` : "";
@@ -1603,7 +1649,7 @@
     }
 
     function mobileAssignment(person, personIndex, blockIndex, value) {
-      const protectedCell = fundamentalCells.has(`${person.id}:${blockIndex}`);
+      const protectedCell = (activeView === "actual" ? actualFundamentalCells : requestedFundamentalCells).has(`${person.id}:${blockIndex}`);
       const style = rotationStyle(value);
       const label = value || "Open block";
       if (activeView === "actual") {
@@ -1746,6 +1792,7 @@
       const isSpecialty = activeView === "specialty";
       document.querySelectorAll(".chief-action").forEach(button => button.hidden = !isActual);
       document.querySelectorAll(".resident-action").forEach(button => button.hidden = !isRequested);
+      els.manageFundamentals.hidden = !chiefSignedIn || (!isRequested && !isActual);
       els.rotationPanel.hidden = !isActual;
       els.exportButton.hidden = isComparison || isSpecialty;
       els.exportButton.textContent = isActual ? "Export final Excel" : "Export requested Excel";
@@ -1774,8 +1821,8 @@
         els.tableNote.textContent = "Requested blocks are read-only here. Sign in, select your profile, and use the 13-block list to edit only your own requests.";
       } else if (isActual) {
         els.scheduleHeading.textContent = "Master block schedule · Final Done by the Chief";
-        els.modePill.textContent = fundamentalsUnlocked ? "Fundamentals unlocked" : "Baseline protected";
-        els.tableNote.textContent = "Open blocks accept repeated selections or drops. Filled baseline cells and resident names remain protected until Check to edit is confirmed.";
+        els.modePill.textContent = fundamentalsUnlocked ? "Fundamentals unlocked" : "Fundamentals protected";
+        els.tableNote.textContent = "Open blocks accept repeated selections or drops. Fundamental cells and resident names remain protected until Check to edit is confirmed; use Manage fundamentals to change protection.";
       } else if (isComparison) {
         els.scheduleHeading.textContent = "Chief variance review · R2–R4";
         els.modePill.textContent = els.comparisonSort.options[els.comparisonSort.selectedIndex].text;
@@ -1906,7 +1953,7 @@
     }
 
     function stateSnapshot() {
-      return { requestedResidents: cloneResidents(requestedResidents), actualResidents: cloneResidents(actualResidents), requestMeta: JSON.parse(JSON.stringify(requestMeta)), deletedResidentIds: [...deletedResidentIds] };
+      return { requestedResidents: cloneResidents(requestedResidents), actualResidents: cloneResidents(actualResidents), requestMeta: JSON.parse(JSON.stringify(requestMeta)), deletedResidentIds: [...deletedResidentIds], requestedFundamentalCells: [...requestedFundamentalCells], actualFundamentalCells: [...actualFundamentalCells] };
     }
 
     function restoreSnapshot(snapshot) {
@@ -1914,6 +1961,8 @@
       actualResidents = cloneResidents(snapshot.actualResidents);
       requestMeta = JSON.parse(JSON.stringify(snapshot.requestMeta || {}));
       deletedResidentIds = new Set(snapshot.deletedResidentIds || []);
+      requestedFundamentalCells = new Set(snapshot.requestedFundamentalCells || BASELINE_FUNDAMENTAL_CELLS);
+      actualFundamentalCells = new Set(snapshot.actualFundamentalCells || BASELINE_FUNDAMENTAL_CELLS);
     }
 
     function commitActual(mutator) {
@@ -1944,7 +1993,7 @@
     function applyActualRotation(personIndex, blockIndex, rotation) {
       if (rotation !== "__clear__" && !rotationByName(rotation)) return;
       const person = actualResidents[personIndex];
-      const protectedCell = fundamentalCells.has(`${person.id}:${blockIndex}`);
+      const protectedCell = actualFundamentalCells.has(`${person.id}:${blockIndex}`);
       if (protectedCell && !fundamentalsUnlocked) {
         toast("This baseline block is protected. Use Check to edit before changing it.", "warn");
         return;
@@ -2001,11 +2050,74 @@
         requestedResidents = requestedResidents.filter(item => item.id !== id);
         actualResidents = actualResidents.filter(item => item.id !== id);
         deletedResidentIds.add(id);
+        requestedFundamentalCells = new Set([...requestedFundamentalCells].filter(key => !key.startsWith(`${id}:`)));
+        actualFundamentalCells = new Set([...actualFundamentalCells].filter(key => !key.startsWith(`${id}:`)));
         delete requestMeta[id];
         if (signedResidentId === id) signedResidentId = null;
       });
       renderResidentManager();
       toast(`${person.name} removed.`, "warn");
+    }
+
+    function fundamentalDraftParts() {
+      const isActual = els.fundamentalSchedule.value === "actual";
+      return {
+        people: isActual ? fundamentalDraft.actualResidents : fundamentalDraft.requestedResidents,
+        cells: isActual ? fundamentalDraft.actualFundamentalCells : fundamentalDraft.requestedFundamentalCells,
+      };
+    }
+
+    function renderFundamentalResidentOptions(preferredId = "") {
+      const { people } = fundamentalDraftParts();
+      const current = people.some(person => person.id === preferredId) ? preferredId : people[0]?.id || "";
+      els.fundamentalResident.innerHTML = people.map(person => `<option value="${escapeHtml(person.id)}" ${person.id === current ? "selected" : ""}>${escapeHtml(person.name)} · ${escapeHtml(person.level)}</option>`).join("");
+      els.fundamentalResident.disabled = !people.length;
+    }
+
+    function renderFundamentalEditor() {
+      if (!fundamentalDraft) return;
+      const { people, cells } = fundamentalDraftParts();
+      const person = people.find(item => item.id === els.fundamentalResident.value);
+      if (!person) { els.fundamentalEditorList.innerHTML = `<div class="resident-empty">No residents are available in this schedule.</div>`; return; }
+      const rotationOptions = value => [`<option value="">Open / no rotation</option>`, ...ROTATIONS.map(rotation => `<option value="${escapeHtml(rotation.name)}" ${rotation.name === value ? "selected" : ""}>${escapeHtml(rotation.name)}</option>`)].join("");
+      els.fundamentalEditorList.innerHTML = BLOCKS.map(([block, dates], blockIndex) => {
+        const value = person.assignments[blockIndex];
+        const key = `${person.id}:${blockIndex}`;
+        const fundamental = cells.has(key);
+        return `<div class="fundamental-editor-row ${fundamental ? "is-fundamental" : ""}" data-fundamental-block="${blockIndex}"><div class="fundamental-block-meta"><strong>${escapeHtml(block)}</strong><span>${escapeHtml(dates)}</span></div><select class="field-select fundamental-rotation-select" data-fundamental-rotation style="${choiceStyle(value)}">${rotationOptions(value)}</select><label class="fundamental-toggle"><input type="checkbox" data-fundamental-toggle ${fundamental ? "checked" : ""} ${value ? "" : "disabled"} /><span>${fundamental ? "Fundamental" : "Editable"}</span></label></div>`;
+      }).join("");
+    }
+
+    function openFundamentalManager() {
+      if (!chiefSignedIn) return;
+      fundamentalDraft = {
+        requestedResidents: cloneResidents(requestedResidents),
+        actualResidents: cloneResidents(actualResidents),
+        requestedFundamentalCells: new Set(requestedFundamentalCells),
+        actualFundamentalCells: new Set(actualFundamentalCells),
+      };
+      els.fundamentalSchedule.value = activeView === "actual" ? "actual" : "requested";
+      renderFundamentalResidentOptions(signedResidentId || "");
+      renderFundamentalEditor();
+      els.fundamentalManagerDialog.showModal();
+    }
+
+    async function saveFundamentalChanges() {
+      if (!chiefSignedIn || !fundamentalDraft) return;
+      undoStack.push(stateSnapshot());
+      if (undoStack.length > 80) undoStack.shift();
+      redoStack = [];
+      requestedResidents = cloneResidents(fundamentalDraft.requestedResidents);
+      actualResidents = cloneResidents(fundamentalDraft.actualResidents);
+      requestedFundamentalCells = new Set(fundamentalDraft.requestedFundamentalCells);
+      actualFundamentalCells = new Set(fundamentalDraft.actualFundamentalCells);
+      markDirty();
+      render();
+      await saveChanges("Fundamental rotations saved in Requested and Final schedules.");
+      if (!dirty) {
+        fundamentalDraft = null;
+        els.fundamentalManagerDialog.close();
+      }
     }
 
     function openResidentDialog() {
@@ -2037,7 +2149,7 @@
     }
 
     function hasResidentRequest(person) {
-      return Boolean(requestMeta[person.id]) || person.assignments.some((value, blockIndex) => value && !fundamentalCells.has(`${person.id}:${blockIndex}`));
+      return Boolean(requestMeta[person.id]) || person.assignments.some((value, blockIndex) => value && !requestedFundamentalCells.has(`${person.id}:${blockIndex}`));
     }
 
     function requestChoice(value, blockIndex, isProtected) {
@@ -2052,7 +2164,7 @@
 
     function renderRequestRows(person, openBlock = null) {
       els.requestList.innerHTML = BLOCKS.map(([block, dates], blockIndex) => {
-        const isProtected = fundamentalCells.has(`${person.id}:${blockIndex}`);
+        const isProtected = requestedFundamentalCells.has(`${person.id}:${blockIndex}`);
         const value = requestDraft[blockIndex] || "";
         return `<div class="request-row">
           <span class="block-name">${escapeHtml(block)}</span>
@@ -2136,6 +2248,8 @@
       actualResidents = cloneResidents(BASELINE);
       requestMeta = {};
       deletedResidentIds = new Set();
+      requestedFundamentalCells = new Set(BASELINE_FUNDAMENTAL_CELLS);
+      actualFundamentalCells = new Set(BASELINE_FUNDAMENTAL_CELLS);
       signedResidentId = null;
       chiefSignedIn = false;
       selectedRotation = null;
@@ -2659,6 +2773,7 @@
     els.chiefAccess.addEventListener("click", () => chiefSignedIn ? signOutChief() : openChiefDialog("actual"));
     els.changeChiefPassword.addEventListener("click", openChangeChiefPasswordDialog);
     els.manageResidents.addEventListener("click", openResidentManager);
+    els.manageFundamentals.addEventListener("click", openFundamentalManager);
     els.addResident.addEventListener("click", addResident);
     els.saveResidentManagement.addEventListener("click", async () => {
       await saveChanges("Resident list saved for everyone using this link.");
@@ -2675,6 +2790,31 @@
       const row = event.target.closest("[data-manager-resident]");
       if (row && event.target.closest("[data-manager-remove]")) removeManagedResident(row.dataset.managerResident);
     });
+    els.fundamentalSchedule.addEventListener("change", () => {
+      const residentId = els.fundamentalResident.value;
+      renderFundamentalResidentOptions(residentId);
+      renderFundamentalEditor();
+    });
+    els.fundamentalResident.addEventListener("change", renderFundamentalEditor);
+    els.fundamentalEditorList.addEventListener("change", event => {
+      if (!fundamentalDraft) return;
+      const row = event.target.closest("[data-fundamental-block]");
+      if (!row) return;
+      const blockIndex = Number(row.dataset.fundamentalBlock);
+      const { people, cells } = fundamentalDraftParts();
+      const person = people.find(item => item.id === els.fundamentalResident.value);
+      if (!person) return;
+      const key = `${person.id}:${blockIndex}`;
+      if (event.target.matches("[data-fundamental-rotation]")) {
+        person.assignments[blockIndex] = event.target.value || null;
+        if (!person.assignments[blockIndex]) cells.delete(key);
+      } else if (event.target.matches("[data-fundamental-toggle]")) {
+        if (!person.assignments[blockIndex]) { event.target.checked = false; toast("Choose a rotation before marking this block fundamental.", "warn"); return; }
+        if (event.target.checked) cells.add(key); else cells.delete(key);
+      }
+      renderFundamentalEditor();
+    });
+    els.saveFundamentalChanges.addEventListener("click", saveFundamentalChanges);
     els.residentChiefEntry.addEventListener("click", () => openChiefDialog("actual"));
     els.chiefForm.addEventListener("submit", signInChief);
     els.changeChiefPasswordForm.addEventListener("submit", changeChiefPassword);
