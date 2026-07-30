@@ -454,6 +454,21 @@
     .difference-value span { display: block; margin-bottom: 2px; font-size: 8px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; opacity: .75; }
     .difference-value strong { display: block; overflow: hidden; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
     .no-differences { padding: 10px; border: 1px solid #a7ceb8; border-radius: 6px; background: rgba(56, 127, 88, .09); color: var(--success); font-size: 11px; font-weight: 700; }
+    .rotation-count-section { margin-bottom: 12px; }
+    .rotation-count-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 7px; }
+    .rotation-count-heading strong { font-size: 11px; }
+    .rotation-count-heading span { color: var(--muted); font-size: 9px; }
+    .rotation-count-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; }
+    .rotation-count-card { overflow: hidden; border: 1px solid var(--line); border-radius: 7px; background: var(--paper); }
+    .rotation-count-card.is-variance { border: 2px solid var(--warning); box-shadow: 0 0 0 2px rgba(180, 119, 24, .12); }
+    .rotation-count-name { padding: 6px 7px; border-bottom: 1px solid var(--choice-border, var(--line)); background: var(--choice-fill, var(--paper-2)); color: var(--choice-ink, var(--ink)); font-size: 9px; font-weight: 780; text-align: center; }
+    .rotation-count-values { display: grid; grid-template-columns: 1fr 1fr auto; align-items: center; gap: 4px; padding: 7px; }
+    .rotation-count-value span, .rotation-count-value strong { display: block; text-align: center; }
+    .rotation-count-value span { color: var(--muted); font-size: 7px; font-weight: 780; letter-spacing: .06em; text-transform: uppercase; }
+    .rotation-count-value strong { margin-top: 2px; font-size: 14px; }
+    .rotation-count-delta { min-width: 29px; padding: 4px; border-radius: 999px; background: var(--paper-2); color: var(--muted); font-size: 9px; font-weight: 850; text-align: center; }
+    .rotation-count-card.is-variance .rotation-count-delta { background: #fff0d4; color: #9a5a0a; }
+    html[data-theme="night"] .rotation-count-card.is-variance .rotation-count-delta { background: #5a411c; color: #ffd58e; }
 
     .summary-card { margin-top: 12px; border-top: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
     .summary-shell { overflow-x: auto; }
@@ -728,6 +743,7 @@
       .comparison-score { grid-template-columns: 58px minmax(90px, 1fr) auto; gap: 8px; }
       .comparison-percent { font-size: 19px; }
       .difference-grid { grid-template-columns: 1fr; }
+      .rotation-count-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .summary-card { display: none; }
       .zoom-control { display: none; }
       .utility-footer { padding: 0 10px 14px; }
@@ -1664,9 +1680,10 @@
         const average = Math.round(scores.reduce((sum, score) => sum + score.percentage, 0) / scores.length);
         const exact = scores.filter(score => score.percentage === 100).length;
         const differences = scores.reduce((sum, score) => sum + score.differences.length, 0);
+        const rotationVariances = scores.reduce((sum, score) => sum + score.rotationVariances.length, 0);
         els.viewTitle.textContent = "Chief review · Request vs. Actual";
-        els.viewDescription.textContent = "Chief review for R2–R4 residents. Differences are prioritized; select a percentage to inspect the affected blocks.";
-        els.metrics.innerHTML = metric(`${average}%`, "Overall match") + metric(exact, "Exact residents") + metric(differences, "Differences") + metric(scores.length - exact, "Needs review");
+        els.viewDescription.textContent = "Chief review for R2–R4 residents. Each review includes block arrangement and total counts for every rotation.";
+        els.metrics.innerHTML = metric(`${average}%`, "Overall match") + metric(exact, "Exact residents") + metric(differences, "Block differences") + metric(rotationVariances, "Rotation variances");
       } else {
         const rotation = els.specialtyRotation.value || "Night Float";
         const counts = BLOCKS.map((_, blockIndex) => actualResidents.filter(person => person.assignments[blockIndex] === rotation).length);
@@ -1745,13 +1762,22 @@
     function comparisonForPerson(personIndex) {
       const differences = [];
       let matches = 0;
+      const requestedAssignments = requestedResidents[personIndex].assignments;
+      const actualAssignments = actualResidents[personIndex].assignments;
       BLOCKS.forEach(([block, dates], blockIndex) => {
-        const requested = requestedResidents[personIndex].assignments[blockIndex];
-        const actual = actualResidents[personIndex].assignments[blockIndex];
+        const requested = requestedAssignments[blockIndex];
+        const actual = actualAssignments[blockIndex];
         if (requested === actual) matches++;
         else differences.push({ block, dates, blockIndex, requested, actual });
       });
-      return { matches, differences, percentage: Math.round((matches / BLOCKS.length) * 100) };
+      const usedRotations = new Set([...requestedAssignments, ...actualAssignments].filter(Boolean));
+      const rotationCounts = ROTATIONS.filter(rotation => usedRotations.has(rotation.name)).map(rotation => {
+        const requested = requestedAssignments.filter(value => value === rotation.name).length;
+        const actual = actualAssignments.filter(value => value === rotation.name).length;
+        return { rotation, requested, actual, delta: actual - requested, mismatch: requested !== actual };
+      });
+      const rotationVariances = rotationCounts.filter(item => item.mismatch);
+      return { matches, differences, rotationCounts, rotationVariances, percentage: Math.round((matches / BLOCKS.length) * 100) };
     }
 
     function differenceCard(item) {
@@ -1764,6 +1790,16 @@
       </div>`;
     }
 
+    function rotationCountCard(item) {
+      const delta = item.delta > 0 ? `+${item.delta}` : String(item.delta);
+      return `<div class="rotation-count-card ${item.mismatch ? "is-variance" : ""}"><div class="rotation-count-name" style="${choiceStyle(item.rotation.name)}">${escapeHtml(item.rotation.name)} · ${escapeHtml(item.rotation.short)}</div><div class="rotation-count-values"><div class="rotation-count-value"><span>Requested</span><strong>${item.requested}</strong></div><div class="rotation-count-value"><span>Actual</span><strong>${item.actual}</strong></div><span class="rotation-count-delta">${escapeHtml(delta)}</span></div></div>`;
+    }
+
+    function rotationCountSection(comparison) {
+      if (!comparison.rotationCounts.length) return `<div class="no-differences">No rotations are assigned in either schedule.</div>`;
+      return `<section class="rotation-count-section"><div class="rotation-count-heading"><strong>Rotation totals · Requested vs. Actual</strong><span>${comparison.rotationVariances.length ? `${comparison.rotationVariances.length} highlighted variance${comparison.rotationVariances.length === 1 ? "" : "s"}` : "All rotation totals match"}</span></div><div class="rotation-count-grid">${comparison.rotationCounts.map(rotationCountCard).join("")}</div></section>`;
+    }
+
     function renderComparisonBody(rows) {
       let previousLevel = null;
       return rows.map(({ person, index }) => {
@@ -1772,15 +1808,17 @@
         const comparison = comparisonForPerson(index);
         const expanded = allComparisonExpanded || expandedComparisons.has(person.id);
         const detail = expanded ? `<tr class="comparison-detail-row"><td colspan="17"><div class="comparison-details">
-          <div class="comparison-details-head"><strong>${escapeHtml(person.name)} · block-level differences</strong><span>${comparison.differences.length} of ${BLOCKS.length} blocks differ</span></div>
-          ${comparison.differences.length ? `<div class="difference-grid">${comparison.differences.map(differenceCard).join("")}</div>` : `<div class="no-differences">The requested and actual schedules match in all 13 blocks.</div>`}
+          <div class="comparison-details-head"><strong>${escapeHtml(person.name)} · complete request review</strong><span>${comparison.differences.length} block difference${comparison.differences.length === 1 ? "" : "s"} · ${comparison.rotationVariances.length} rotation variance${comparison.rotationVariances.length === 1 ? "" : "s"}</span></div>
+          ${rotationCountSection(comparison)}
+          <div class="comparison-details-head"><strong>Block arrangement</strong><span>${comparison.differences.length} of ${BLOCKS.length} blocks differ</span></div>
+          ${comparison.differences.length ? `<div class="difference-grid">${comparison.differences.map(differenceCard).join("")}</div>` : `<div class="no-differences">The requested and actual schedules match in all 13 block positions.</div>`}
         </div></td></tr>` : "";
         return `<tr class="comparison-summary-row ${isGroupStart ? "group-start" : ""}">
           <td class="identity-cell">${escapeHtml(person.name)}</td>
           <td class="level-cell">${levelBadge(person.level)}</td>
           <td class="comparison-score-cell" colspan="15"><button class="comparison-score" type="button" data-comparison-resident="${person.id}" aria-expanded="${expanded}">
             <span class="comparison-percent ${comparisonPercentClass(comparison.percentage)}">${comparison.percentage}%</span>
-            <span class="comparison-summary-text"><strong>${comparison.differences.length ? `${comparison.differences.length} difference${comparison.differences.length === 1 ? "" : "s"}` : "Exact match"}</strong><small>${comparison.matches} of ${BLOCKS.length} blocks aligned</small></span>
+            <span class="comparison-summary-text"><strong>${comparison.differences.length || comparison.rotationVariances.length ? `${comparison.differences.length} block · ${comparison.rotationVariances.length} rotation variance${comparison.rotationVariances.length === 1 ? "" : "s"}` : "Exact match"}</strong><small>${comparison.matches} of ${BLOCKS.length} blocks aligned</small></span>
             <span class="comparison-score-copy">${expanded ? "Hide details" : "Review"}</span>
           </button></td>
         </tr>${detail}`;
@@ -1812,8 +1850,9 @@
       if (activeView === "comparison") {
         els.mobileSchedule.innerHTML = rows.length ? `<div class="mobile-resident-list">${rows.map(({ person, index }) => {
           const comparison = comparisonForPerson(index);
-          const details = comparison.differences.length ? `<div class="difference-grid">${comparison.differences.map(differenceCard).join("")}</div>` : `<div class="no-differences">The requested and actual schedules match in all 13 blocks.</div>`;
-          return `<details class="mobile-resident-card mobile-comparison-card" data-mobile-resident="${escapeHtml(person.id)}" ${mobileExpandedResidents.has(person.id) ? "open" : ""}><summary class="mobile-resident-summary"><span class="mobile-resident-identity"><strong>${escapeHtml(person.name)}</strong><small>${escapeHtml(person.level)} · ${comparison.differences.length} difference${comparison.differences.length === 1 ? "" : "s"}</small></span><span class="mobile-comparison-score ${comparisonPercentClass(comparison.percentage)}">${comparison.percentage}%</span></summary><div class="mobile-comparison-detail">${details}</div></details>`;
+          const blockDetails = comparison.differences.length ? `<div class="difference-grid">${comparison.differences.map(differenceCard).join("")}</div>` : `<div class="no-differences">The requested and actual schedules match in all 13 block positions.</div>`;
+          const details = `${rotationCountSection(comparison)}<div class="comparison-details-head"><strong>Block arrangement</strong><span>${comparison.differences.length} differences</span></div>${blockDetails}`;
+          return `<details class="mobile-resident-card mobile-comparison-card" data-mobile-resident="${escapeHtml(person.id)}" ${mobileExpandedResidents.has(person.id) ? "open" : ""}><summary class="mobile-resident-summary"><span class="mobile-resident-identity"><strong>${escapeHtml(person.name)}</strong><small>${escapeHtml(person.level)} · ${comparison.differences.length} block · ${comparison.rotationVariances.length} rotation</small></span><span class="mobile-comparison-score ${comparisonPercentClass(comparison.percentage)}">${comparison.percentage}%</span></summary><div class="mobile-comparison-detail">${details}</div></details>`;
         }).join("")}</div>` : `<div class="resident-empty">No residents match the current filters.</div>`;
         return;
       }
