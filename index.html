@@ -1236,6 +1236,8 @@
     let deletedResidentIds = new Set();
     let requestedFundamentalCells = new Set(BASELINE_FUNDAMENTAL_CELLS);
     let actualFundamentalCells = new Set(BASELINE_FUNDAMENTAL_CELLS);
+    let serverRevision = 0;
+    let lastSyncedState = null;
     let activeView = "requested";
     let selectedRotation = null;
     let fundamentalsUnlocked = false;
@@ -1372,11 +1374,119 @@
       return { version: 6, savedAt, requestedResidents, actualResidents, requestMeta, deletedResidentIds: [...deletedResidentIds], requestedFundamentalCells: [...requestedFundamentalCells], actualFundamentalCells: [...actualFundamentalCells], theme: els.theme.value };
     }
 
+    const cloneSerializable = value => value === undefined ? undefined : JSON.parse(JSON.stringify(value));
+    const sameSerializable = (left, right) => JSON.stringify(left) === JSON.stringify(right);
+
+    function normalizedSerializableState(raw = {}) {
+      const deleted = new Set(Array.isArray(raw.deletedResidentIds) ? raw.deletedResidentIds : []);
+      return {
+        version: 6,
+        savedAt: raw.savedAt || new Date().toISOString(),
+        requestedResidents: normalizedPeople(raw.requestedResidents, deleted),
+        actualResidents: normalizedPeople(raw.actualResidents, deleted),
+        requestMeta: raw.requestMeta && typeof raw.requestMeta === "object" ? raw.requestMeta : {},
+        deletedResidentIds: [...deleted],
+        requestedFundamentalCells: Array.isArray(raw.requestedFundamentalCells) ? raw.requestedFundamentalCells : [...BASELINE_FUNDAMENTAL_CELLS],
+        actualFundamentalCells: Array.isArray(raw.actualFundamentalCells) ? raw.actualFundamentalCells : [...BASELINE_FUNDAMENTAL_CELLS],
+        theme: THEMES[raw.theme] ? raw.theme : "day",
+      };
+    }
+
+    function mergeConcurrentState(baseRaw, localRaw, remoteRaw) {
+      const base = normalizedSerializableState(baseRaw);
+      const local = normalizedSerializableState(localRaw);
+      const remote = normalizedSerializableState(remoteRaw);
+      const tracker = { conflicts: 0 };
+      const mergeValue = (baseValue, localValue, remoteValue) => {
+        if (sameSerializable(localValue, baseValue)) return cloneSerializable(remoteValue);
+        if (sameSerializable(remoteValue, baseValue)) return cloneSerializable(localValue);
+        if (sameSerializable(localValue, remoteValue)) return cloneSerializable(localValue);
+        tracker.conflicts++;
+        return cloneSerializable(localValue);
+      };
+      const mergePerson = (basePerson, localPerson, remotePerson) => {
+        const baseAssignments = basePerson?.assignments || blank13();
+        const localAssignments = localPerson?.assignments || blank13();
+        const remoteAssignments = remotePerson?.assignments || blank13();
+        return {
+          id: localPerson?.id || remotePerson?.id || basePerson.id,
+          name: mergeValue(basePerson?.name, localPerson?.name, remotePerson?.name),
+          level: mergeValue(basePerson?.level, localPerson?.level, remotePerson?.level),
+          endLevel: mergeValue(basePerson?.endLevel, localPerson?.endLevel, remotePerson?.endLevel),
+          assignments: BLOCKS.map((_, index) => mergeValue(baseAssignments[index] ?? null, localAssignments[index] ?? null, remoteAssignments[index] ?? null)),
+        };
+      };
+      const mergePeople = (basePeople, localPeople, remotePeople) => {
+        const maps = [basePeople, localPeople, remotePeople].map(people => new Map(people.map(person => [person.id, person])));
+        const ids = new Set([...maps[0].keys(), ...maps[1].keys(), ...maps[2].keys()]);
+        const merged = new Map();
+        ids.forEach(id => {
+          const [basePerson, localPerson, remotePerson] = maps.map(map => map.get(id));
+          if (!basePerson) {
+            if (localPerson && remotePerson) merged.set(id, sameSerializable(localPerson, remotePerson) ? cloneSerializable(localPerson) : mergePerson(null, localPerson, remotePerson));
+            else if (localPerson || remotePerson) merged.set(id, cloneSerializable(localPerson || remotePerson));
+            return;
+          }
+          if (!localPerson || !remotePerson) {
+            const survivor = localPerson || remotePerson;
+            if (!survivor) return;
+            if (sameSerializable(survivor, basePerson)) return;
+            tracker.conflicts++;
+            if (localPerson) merged.set(id, cloneSerializable(localPerson));
+            return;
+          }
+          merged.set(id, mergePerson(basePerson, localPerson, remotePerson));
+        });
+        const order = [...remotePeople.map(person => person.id), ...localPeople.map(person => person.id).filter(id => !maps[2].has(id))];
+        return order.filter((id, index) => order.indexOf(id) === index && merged.has(id)).map(id => merged.get(id));
+      };
+      const mergeSet = (baseValues, localValues, remoteValues) => {
+        const sets = [baseValues, localValues, remoteValues].map(values => new Set(values || []));
+        const keys = new Set([...sets[0], ...sets[1], ...sets[2]]);
+        return [...keys].filter(key => mergeValue(sets[0].has(key), sets[1].has(key), sets[2].has(key)));
+      };
+      const mergeMap = (baseMap, localMap, remoteMap) => {
+        const result = {};
+        const keys = new Set([...Object.keys(baseMap || {}), ...Object.keys(localMap || {}), ...Object.keys(remoteMap || {})]);
+        keys.forEach(key => {
+          const value = mergeValue(baseMap?.[key], localMap?.[key], remoteMap?.[key]);
+          if (value !== undefined) result[key] = value;
+        });
+        return result;
+      };
+      return {
+        conflicts: tracker.conflicts,
+        state: {
+          version: 6,
+          savedAt: local.savedAt,
+          requestedResidents: mergePeople(base.requestedResidents, local.requestedResidents, remote.requestedResidents),
+          actualResidents: mergePeople(base.actualResidents, local.actualResidents, remote.actualResidents),
+          requestMeta: mergeMap(base.requestMeta, local.requestMeta, remote.requestMeta),
+          deletedResidentIds: mergeSet(base.deletedResidentIds, local.deletedResidentIds, remote.deletedResidentIds),
+          requestedFundamentalCells: mergeSet(base.requestedFundamentalCells, local.requestedFundamentalCells, remote.requestedFundamentalCells),
+          actualFundamentalCells: mergeSet(base.actualFundamentalCells, local.actualFundamentalCells, remote.actualFundamentalCells),
+          theme: mergeValue(base.theme, local.theme, remote.theme),
+        },
+      };
+    }
+
+    function applySerializableState(state) {
+      const parsed = normalizedSerializableState(state);
+      deletedResidentIds = new Set(parsed.deletedResidentIds);
+      requestedResidents = cloneResidents(parsed.requestedResidents);
+      actualResidents = cloneResidents(parsed.actualResidents);
+      requestMeta = cloneSerializable(parsed.requestMeta);
+      requestedFundamentalCells = new Set(parsed.requestedFundamentalCells);
+      actualFundamentalCells = new Set(parsed.actualFundamentalCells);
+      setTheme(parsed.theme, false);
+    }
+
     async function loadSaved() {
       try {
         const response = await fetch("/api/schedule");
         if (response.ok) {
           const remote = await response.json();
+          serverRevision = Number(remote.revision) || 0;
           if (remote.state) {
             const parsed = remote.state;
             deletedResidentIds = new Set(Array.isArray(parsed.deletedResidentIds) ? parsed.deletedResidentIds : []);
@@ -1386,6 +1496,7 @@
             requestedFundamentalCells = new Set(Array.isArray(parsed.requestedFundamentalCells) ? parsed.requestedFundamentalCells : BASELINE_FUNDAMENTAL_CELLS);
             actualFundamentalCells = new Set(Array.isArray(parsed.actualFundamentalCells) ? parsed.actualFundamentalCells : BASELINE_FUNDAMENTAL_CELLS);
             els.theme.value = THEMES[parsed.theme] ? parsed.theme : "day";
+            lastSyncedState = cloneSerializable(serializeState(remote.savedAt || parsed.savedAt));
             setSavedLabel(`Shared save ${formatTimestamp(remote.savedAt || parsed.savedAt)}`, "is-saved");
             render();
             return;
@@ -1401,6 +1512,7 @@
           requestedFundamentalCells = new Set(Array.isArray(parsed.requestedFundamentalCells) ? parsed.requestedFundamentalCells : BASELINE_FUNDAMENTAL_CELLS);
           actualFundamentalCells = new Set(Array.isArray(parsed.actualFundamentalCells) ? parsed.actualFundamentalCells : BASELINE_FUNDAMENTAL_CELLS);
           els.theme.value = THEMES[parsed.theme] ? parsed.theme : "day";
+          lastSyncedState = cloneSerializable(serializeState(parsed.savedAt));
           if (parsed.savedAt) setSavedLabel(`Saved ${formatTimestamp(parsed.savedAt)}`, "is-saved");
           return;
         }
@@ -1415,6 +1527,7 @@
       } catch (error) {
         console.warn("Saved schedule could not be loaded", error);
       }
+      if (!lastSyncedState) lastSyncedState = cloneSerializable(serializeState());
     }
 
     function formatTimestamp(value) {
@@ -1425,15 +1538,41 @@
 
     async function saveChanges(message = "Schedule saved for everyone using this link.") {
       const savedAt = new Date().toISOString();
-      const state = serializeState(savedAt);
+      let pendingState = cloneSerializable(serializeState(savedAt));
+      let pendingRevision = serverRevision;
+      let mergeCount = 0;
+      let exactConflicts = 0;
       try {
-        const response = await fetch("/api/schedule", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ state }) });
-        if (!response.ok) throw new Error("Shared save failed");
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-        dirty = false;
-        setSavedLabel(`Shared save ${formatTimestamp(savedAt)}`, "is-saved");
-        toast(message, "success");
+        for (let attempt = 0; attempt < 4; attempt++) {
+          const response = await fetch("/api/schedule", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ state: pendingState, baseRevision: pendingRevision }) });
+          const result = await response.json().catch(() => ({}));
+          if (response.status === 409) {
+            const remoteState = normalizedSerializableState(result.state || {});
+            const merged = mergeConcurrentState(lastSyncedState || remoteState, pendingState, remoteState);
+            pendingState = merged.state;
+            pendingRevision = Number(result.revision) || 0;
+            serverRevision = pendingRevision;
+            lastSyncedState = cloneSerializable(remoteState);
+            mergeCount++;
+            exactConflicts += merged.conflicts;
+            continue;
+          }
+          if (!response.ok) throw new Error("Shared save failed");
+          serverRevision = Number(result.revision) || pendingRevision + 1;
+          applySerializableState(pendingState);
+          lastSyncedState = cloneSerializable(pendingState);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(pendingState));
+          dirty = false;
+          setSavedLabel(`Shared save ${formatTimestamp(result.savedAt || savedAt)}`, "is-saved");
+          render();
+          if (exactConflicts) toast(`Saved after merging another device. ${exactConflicts} same-field conflict${exactConflicts === 1 ? " was" : "s were"} kept from this device.`, "warn");
+          else if (mergeCount) toast("Saved successfully after merging changes from another device.", "success");
+          else toast(message, "success");
+          return true;
+        }
+        throw new Error("Schedule remained busy");
       } catch (error) { toast("Shared save is unavailable. Check the connection and try again.", "warn"); }
+      return false;
     }
 
     function setTheme(theme, persist = true) {
@@ -2257,6 +2396,8 @@
       undoStack = [];
       redoStack = [];
       dirty = false;
+      serverRevision = 0;
+      lastSyncedState = cloneSerializable(serializeState());
       setSavedLabel("Reference baseline");
       setView("requested");
       toast("Both schedules were restored to the supplied image baseline.", "success");

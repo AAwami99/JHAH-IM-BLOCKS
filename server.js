@@ -32,12 +32,46 @@ const migrateSchedule = state => {
   const deletedResidentIds = Array.isArray(state.deletedResidentIds) ? state.deletedResidentIds : [];
   return { ...state, version: Math.max(Number(state.version) || 0, 6), deletedResidentIds, requestedResidents: alignLevels(mergeNajd(state.requestedResidents, deletedResidentIds)), actualResidents: alignLevels(mergeNajd(state.actualResidents, deletedResidentIds)) };
 };
-async function init() { await pool.query('CREATE TABLE IF NOT EXISTS app_state (key text PRIMARY KEY, value jsonb NOT NULL, updated_at timestamptz NOT NULL DEFAULT now())'); }
+async function init() {
+  await pool.query('CREATE TABLE IF NOT EXISTS app_state (key text PRIMARY KEY, value jsonb NOT NULL, updated_at timestamptz NOT NULL DEFAULT now(), revision bigint NOT NULL DEFAULT 0)');
+  await pool.query('ALTER TABLE app_state ADD COLUMN IF NOT EXISTS revision bigint NOT NULL DEFAULT 0');
+}
 const server = http.createServer(async (req, res) => {
   try {
     if (req.url === '/api/health') return json(res, 200, { ok: true });
-    if (req.url === '/api/schedule' && req.method === 'GET') { const r = await pool.query("SELECT value, updated_at FROM app_state WHERE key='schedule'"); if (!r.rowCount) return json(res, 200, { state: null }); const state = migrateSchedule(r.rows[0].value); if (JSON.stringify(state) !== JSON.stringify(r.rows[0].value)) await pool.query("UPDATE app_state SET value=$1, updated_at=now() WHERE key='schedule'", [state]); return json(res, 200, { state, savedAt: r.rows[0].updated_at }); }
-    if (req.url === '/api/schedule' && req.method === 'PUT') { const { state } = await readBody(req); if (!state) return json(res, 400, { error: 'Missing schedule.' }); const mergedState = migrateSchedule(state); await pool.query("INSERT INTO app_state(key,value) VALUES('schedule',$1) ON CONFLICT(key) DO UPDATE SET value=$1, updated_at=now()", [mergedState]); return json(res, 200, { ok: true }); }
+    if (req.url === '/api/schedule' && req.method === 'GET') {
+      const r = await pool.query("SELECT value, updated_at, revision FROM app_state WHERE key='schedule'");
+      if (!r.rowCount) return json(res, 200, { state: null, revision: 0 });
+      const state = migrateSchedule(r.rows[0].value);
+      if (JSON.stringify(state) !== JSON.stringify(r.rows[0].value)) await pool.query("UPDATE app_state SET value=$1 WHERE key='schedule'", [state]);
+      return json(res, 200, { state, savedAt: r.rows[0].updated_at, revision: Number(r.rows[0].revision) });
+    }
+    if (req.url === '/api/schedule' && req.method === 'PUT') {
+      const { state, baseRevision } = await readBody(req);
+      if (!state) return json(res, 400, { error: 'Missing schedule.' });
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        await client.query("SELECT pg_advisory_xact_lock(hashtext('jhah-schedule'))");
+        const current = await client.query("SELECT value, updated_at, revision FROM app_state WHERE key='schedule' FOR UPDATE");
+        const currentRevision = current.rowCount ? Number(current.rows[0].revision) : 0;
+        if (!Number.isFinite(Number(baseRevision)) || Number(baseRevision) !== currentRevision) {
+          await client.query('ROLLBACK');
+          const row = current.rows[0];
+          return json(res, 409, { error: 'Schedule changed on another device.', state: row ? migrateSchedule(row.value) : null, savedAt: row?.updated_at || null, revision: currentRevision });
+        }
+        const nextRevision = currentRevision + 1;
+        const mergedState = migrateSchedule(state);
+        const saved = await client.query("INSERT INTO app_state(key,value,revision) VALUES('schedule',$1,$2) ON CONFLICT(key) DO UPDATE SET value=$1, revision=$2, updated_at=now() RETURNING updated_at", [mergedState, nextRevision]);
+        await client.query('COMMIT');
+        return json(res, 200, { ok: true, revision: nextRevision, savedAt: saved.rows[0].updated_at });
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
+    }
     if (req.url === '/api/chief/login' && req.method === 'POST') { const { password } = await readBody(req); const saved = await pool.query("SELECT value FROM app_state WHERE key='chief_password'"); const current = saved.rowCount ? saved.rows[0].value.password : process.env.CHIEF_PASSWORD; if (!current || !secret || ![current, process.env.MASTER_KEY].includes(password)) return json(res, 401, { error: 'Incorrect password.' }); return json(res, 200, { token: tokenFor() }); }
     if (req.url === '/api/chief/password' && req.method === 'PUT') { if (!chief(req)) return json(res, 401, { error: 'Chief access required.' }); const { password } = await readBody(req); if (!password || password.length < 8) return json(res, 400, { error: 'Password must be at least 8 characters.' }); await pool.query("INSERT INTO app_state(key,value) VALUES('chief_password',$1) ON CONFLICT(key) DO UPDATE SET value=$1", [{ password }]); return json(res, 200, { ok: true }); }
     if (req.url === '/api/baseline/restore' && req.method === 'POST') { if (!chief(req)) return json(res, 401, { error: 'Chief access required.' }); await pool.query("DELETE FROM app_state WHERE key='schedule'"); return json(res, 200, { ok: true }); }
