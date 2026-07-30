@@ -219,7 +219,7 @@
 
     .toolbar {
       display: flex;
-      align-items: center;
+      align-items: flex-end;
       justify-content: space-between;
       gap: 16px;
       padding: 10px 12px;
@@ -228,6 +228,7 @@
       border-top: 0;
     }
     .filters, .toolbar-actions, .zoom-control { display: flex; align-items: center; gap: 7px; }
+    .filters, .toolbar-actions { align-items: flex-end; }
     .search-input { width: 210px; }
     .level-filter { width: 108px; }
     .toolbar-divider { width: 1px; height: 26px; background: var(--line); margin: 0 2px; }
@@ -295,8 +296,8 @@
     .mobile-schedule { display: none; }
     .mobile-view-controls { display: none; }
     .mobile-rotation-label { display: none; }
-    .desktop-level-control { display: grid; gap: 3px; }
-    .desktop-level-control > span { color: var(--muted); font-size: 7px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    .desktop-level-control { display: grid; gap: 4px; }
+    .desktop-level-control > span { padding-left: 2px; color: var(--muted); font-size: 7px; font-weight: 800; line-height: 1; letter-spacing: .08em; text-transform: uppercase; }
     .mobile-resident-list { display: grid; gap: 10px; }
     .mobile-resident-card { overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); box-shadow: 0 3px 12px rgba(20, 47, 51, .06); }
     .mobile-resident-card > summary { list-style: none; cursor: pointer; }
@@ -642,7 +643,7 @@
       .cycle-brief { border-left: 0; padding-left: 0; }
       .mast-actions { grid-template-columns: auto auto auto; justify-content: end; }
       .saved-indicator { text-align: left; }
-      .toolbar { align-items: flex-start; }
+      .toolbar { align-items: flex-end; }
       .toolbar-actions { flex-wrap: wrap; justify-content: flex-end; }
       .schedule-table col.resident-col { width: 70px; }
       .schedule-table col.end-resident-col { width: 58px; }
