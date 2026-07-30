@@ -293,6 +293,7 @@
 
     .table-shell { width: 100%; overflow-x: auto; overflow-y: visible; background: var(--paper); }
     .mobile-schedule { display: none; }
+    .mobile-view-controls { display: none; }
     .mobile-resident-list { display: grid; gap: 10px; }
     .mobile-resident-card { overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); box-shadow: 0 3px 12px rgba(20, 47, 51, .06); }
     .mobile-resident-card > summary { list-style: none; cursor: pointer; }
@@ -673,6 +674,8 @@
       .metric span { font-size: 7px; }
       .toolbar { display: grid; padding: 9px; border-left: 0; border-right: 0; }
       .filters { display: grid; grid-template-columns: 1fr 110px; width: 100%; }
+      #desktopLevelFilterWrap { display: none; }
+      .filters { grid-template-columns: 1fr; }
       .search-input, .level-filter { width: 100%; }
       .toolbar-actions { justify-content: flex-start; width: 100%; }
       .toolbar-divider { display: none; }
@@ -683,8 +686,20 @@
       .card-bar-actions { flex-wrap: wrap; justify-content: flex-end; }
       .table-shell { display: none; }
       .mobile-schedule { display: block; padding: 10px; background: var(--canvas); }
+      .mobile-view-controls { display: grid; grid-template-columns: 1fr auto; gap: 9px; align-items: end; padding: 10px; border-bottom: 1px solid var(--line); background: var(--paper); }
+      .mobile-view-switch { display: grid; grid-template-columns: 1fr 1fr; padding: 3px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper-2); }
+      .mobile-view-switch button { min-height: 35px; border: 0; border-radius: 5px; background: transparent; color: var(--muted); font-size: 10px; font-weight: 760; }
+      .mobile-view-switch button[aria-pressed="true"] { background: var(--paper); color: var(--accent-strong); box-shadow: 0 1px 4px rgba(20,47,51,.12); }
+      .mobile-level-control { display: grid; gap: 3px; }
+      .mobile-level-control span { color: var(--muted); font-size: 7px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+      .mobile-level-control .field-select { min-width: 92px; }
       .schedule-table { min-width: 1040px !important; width: 1040px !important; font-size: 9px !important; }
       .schedule-table.is-comparison { min-width: 0 !important; width: 100% !important; font-size: 10px !important; }
+      body.mobile-full-table .table-shell { display: block; }
+      body.mobile-full-table .mobile-schedule { display: none; }
+      body.mobile-full-table .schedule-table,
+      body.mobile-full-table .schedule-table.is-comparison { width: max(100%, var(--mobile-table-width, 260px)) !important; min-width: max(100%, var(--mobile-table-width, 260px)) !important; font-size: var(--mobile-table-font, 3.5px) !important; }
+      body.mobile-full-table .zoom-control { display: inline-flex; }
       .comparison-summary-row { height: 58px !important; }
       .comparison-score { grid-template-columns: 58px minmax(90px, 1fr) auto; gap: 8px; }
       .comparison-percent { font-size: 19px; }
@@ -782,7 +797,7 @@
             <span class="sr-only">Find a resident</span>
             <input id="searchInput" class="field-input search-input" type="search" placeholder="Find a resident" autocomplete="off" />
           </label>
-          <label>
+          <label id="desktopLevelFilterWrap">
             <span class="sr-only">Filter by year</span>
             <select id="levelFilter" class="field-select level-filter">
               <option value="all">All years</option>
@@ -857,6 +872,13 @@
             <button id="comparisonToggleAll" class="button" type="button" hidden>Show all details</button>
             <span id="modePill" class="mode-pill">Resident list editing</span>
           </div>
+        </div>
+        <div id="mobileViewControls" class="mobile-view-controls">
+          <div class="mobile-view-switch" role="group" aria-label="Mobile schedule layout">
+            <button id="mobileCardsViewBtn" type="button" aria-pressed="true">Resident cards</button>
+            <button id="mobileTableViewBtn" type="button" aria-pressed="false">Full table</button>
+          </div>
+          <label class="mobile-level-control"><span>Filter year</span><select id="mobileLevelFilter" class="field-select"><option value="all">All years</option><option value="R4">R4</option><option value="R3">R3</option><option value="R2">R2</option><option value="R1">R1</option></select></label>
         </div>
         <div id="scheduleShell" class="table-shell" tabindex="0" aria-label="Resident rotation schedule">
           <table id="scheduleTable" class="schedule-table">
@@ -1174,6 +1196,7 @@
     let requestDraft = null;
     let dirty = false;
     let zoomPercent = 100;
+    let mobileScheduleMode = "cards";
     let expandedComparisons = new Set();
     let mobileExpandedResidents = new Set();
     let allComparisonExpanded = false;
@@ -1193,6 +1216,9 @@
       metrics: document.getElementById("contextMetrics"),
       search: document.getElementById("searchInput"),
       level: document.getElementById("levelFilter"),
+      mobileLevel: document.getElementById("mobileLevelFilter"),
+      mobileCardsView: document.getElementById("mobileCardsViewBtn"),
+      mobileTableView: document.getElementById("mobileTableViewBtn"),
       zoomOut: document.getElementById("zoomOutBtn"),
       zoomFit: document.getElementById("zoomFitBtn"),
       zoomIn: document.getElementById("zoomInBtn"),
@@ -1719,6 +1745,8 @@
       els.specialtyExportWrap.hidden = !isSpecialty;
       const r1FilterOption = els.level.querySelector('option[value="R1"]');
       if (r1FilterOption) r1FilterOption.hidden = isComparison;
+      const mobileR1FilterOption = els.mobileLevel.querySelector('option[value="R1"]');
+      if (mobileR1FilterOption) mobileR1FilterOption.hidden = isComparison;
       els.comparisonToggleAll.textContent = allComparisonExpanded ? "Collapse all details" : "Show all details";
       els.table.classList.toggle("is-comparison", isComparison);
       els.table.classList.toggle("is-specialty", isSpecialty);
@@ -1750,10 +1778,27 @@
       const fit = zoomPercent === 100;
       els.table.style.setProperty("--table-width", `${zoomPercent}%`);
       els.table.style.setProperty("--table-min-width", fit ? "100%" : zoomPercent < 100 ? `${zoomPercent}%` : `${zoomPercent}%`);
-      els.table.style.setProperty("--table-font", `${Math.max(7, Math.min(10, zoomPercent / 12))}px`);
+      els.table.style.setProperty("--table-font", `${Math.max(3.5, Math.min(10, zoomPercent / 12))}px`);
+      els.table.style.setProperty("--mobile-table-width", `${Math.round(1040 * zoomPercent / 100)}px`);
+      els.table.style.setProperty("--mobile-table-font", `${Math.max(3.5, zoomPercent / 12)}px`);
       els.zoomFit.textContent = fit ? "Fit 13" : `${zoomPercent}%`;
-      els.zoomOut.disabled = zoomPercent <= 75;
+      els.zoomOut.disabled = zoomPercent <= 25;
       els.zoomIn.disabled = zoomPercent >= 150;
+    }
+
+    function setMobileScheduleMode(mode) {
+      mobileScheduleMode = mode === "table" ? "table" : "cards";
+      document.body.classList.toggle("mobile-full-table", mobileScheduleMode === "table");
+      els.mobileCardsView.setAttribute("aria-pressed", String(mobileScheduleMode === "cards"));
+      els.mobileTableView.setAttribute("aria-pressed", String(mobileScheduleMode === "table"));
+      if (mobileScheduleMode === "table" && window.matchMedia("(max-width: 720px)").matches) {
+        zoomPercent = 25;
+        applyZoom();
+        els.shell.scrollLeft = 0;
+      } else if (mobileScheduleMode === "cards") {
+        zoomPercent = 100;
+        applyZoom();
+      }
     }
 
     function render() {
@@ -1774,7 +1819,10 @@
         toast("Chief password is required for this workspace.", "warn");
         return;
       }
-      if (view === "comparison" && els.level.value === "R1") els.level.value = "all";
+      if (view === "comparison" && els.level.value === "R1") {
+        els.level.value = "all";
+        els.mobileLevel.value = "all";
+      }
       activeView = view;
       document.querySelectorAll(".view-tab").forEach(tab => tab.setAttribute("aria-selected", String(tab.dataset.view === view)));
       render();
@@ -2581,8 +2629,16 @@
     els.search.addEventListener("input", renderBody);
     els.level.addEventListener("change", () => {
       if (activeView === "comparison" && els.level.value === "R1") els.level.value = "all";
+      els.mobileLevel.value = els.level.value;
       renderBody();
     });
+    els.mobileLevel.addEventListener("change", () => {
+      if (activeView === "comparison" && els.mobileLevel.value === "R1") els.mobileLevel.value = "all";
+      els.level.value = els.mobileLevel.value;
+      renderBody();
+    });
+    els.mobileCardsView.addEventListener("click", () => setMobileScheduleMode("cards"));
+    els.mobileTableView.addEventListener("click", () => setMobileScheduleMode("table"));
     els.theme.addEventListener("change", () => { setTheme(els.theme.value); markDirty(); });
     els.account.addEventListener("click", openResidentDialog);
     els.chiefAccess.addEventListener("click", () => chiefSignedIn ? signOutChief() : openChiefDialog("actual"));
@@ -2708,8 +2764,8 @@
       const input = event.target.closest("[data-field][data-person-index]");
       if (input) updateIdentity(Number(input.dataset.personIndex), input.dataset.field, input.value);
     });
-    els.zoomOut.addEventListener("click", () => { zoomPercent = Math.max(75, zoomPercent - (zoomPercent === 100 ? 10 : 15)); applyZoom(); renderBody(); });
-    els.zoomIn.addEventListener("click", () => { zoomPercent = Math.min(150, zoomPercent + (zoomPercent === 100 ? 10 : 15)); applyZoom(); renderBody(); });
+    els.zoomOut.addEventListener("click", () => { zoomPercent = Math.max(25, zoomPercent - (zoomPercent <= 75 ? 10 : zoomPercent === 100 ? 10 : 15)); applyZoom(); renderBody(); });
+    els.zoomIn.addEventListener("click", () => { zoomPercent = Math.min(150, zoomPercent + (zoomPercent < 75 ? 10 : zoomPercent < 100 ? Math.min(15, 100 - zoomPercent) : zoomPercent === 100 ? 10 : 15)); applyZoom(); renderBody(); });
     els.zoomFit.addEventListener("click", () => { zoomPercent = 100; applyZoom(); renderBody(); els.shell.scrollLeft = 0; });
     els.comparisonStatus.addEventListener("change", () => {
       allComparisonExpanded = false;
@@ -2755,6 +2811,10 @@
         event.preventDefault();
         redo();
       }
+    });
+
+    window.matchMedia("(max-width: 720px)").addEventListener("change", event => {
+      if (!event.matches && mobileScheduleMode === "table") setMobileScheduleMode("cards");
     });
 
     loadSaved();
