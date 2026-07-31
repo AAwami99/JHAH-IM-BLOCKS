@@ -45,8 +45,6 @@
       --warning: #ddb76e;
       --danger: #e2958d;
       --shadow: 0 8px 24px rgba(0, 0, 0, .22);
-      --night-rotation-base: #182126;
-      --night-rotation-ink: #f1f5f6;
     }
 
     * { box-sizing: border-box; }
@@ -726,36 +724,6 @@
     .toast { min-width: 260px; max-width: 380px; padding: 10px 12px; border: 1px solid var(--line-strong); border-left: 4px solid var(--accent); border-radius: 6px; background: var(--paper); color: var(--ink); box-shadow: var(--shadow); font-size: 12px; }
     .toast.warn { border-left-color: var(--warning); }
     .toast.success { border-left-color: var(--success); }
-
-    html[data-theme="night"] .rotation-chip:not(.clear-chip) {
-      border-color: color-mix(in srgb, var(--chip-border) 48%, var(--line));
-      background: color-mix(in srgb, var(--chip-fill) 38%, var(--night-rotation-base));
-      color: var(--night-rotation-ink);
-    }
-    html[data-theme="night"] .assignment-button[style*="--rotation-fill"],
-    html[data-theme="night"] .assignment-display[style*="--rotation-fill"],
-    html[data-theme="night"] .mobile-assignment[style*="--rotation-fill"] {
-      background: color-mix(in srgb, var(--rotation-fill) 38%, var(--night-rotation-base));
-      color: var(--night-rotation-ink);
-    }
-    html[data-theme="night"] .summary-specialty {
-      border-right-color: color-mix(in srgb, var(--rotation-border) 48%, var(--line)) !important;
-      background: color-mix(in srgb, var(--rotation-fill) 38%, var(--night-rotation-base)) !important;
-      color: var(--night-rotation-ink) !important;
-    }
-    html[data-theme="night"] .request-choice[style*="--choice-fill"],
-    html[data-theme="night"] .rotation-option:not(.open-option),
-    html[data-theme="night"] .fundamental-rotation-select[style*="--choice-fill"],
-    html[data-theme="night"] .difference-value[style*="--choice-fill"],
-    html[data-theme="night"] .rotation-count-name[style*="--choice-fill"],
-    html[data-theme="night"] .compare-rotation-name[style*="--choice-fill"],
-    html[data-theme="night"] .compare-assignment-chip[style*="--choice-fill"],
-    html[data-theme="night"] .journey-rotation[style*="--choice-fill"],
-    html[data-theme="night"] .mobile-journey-rotation[style*="--choice-fill"] {
-      border-color: color-mix(in srgb, var(--choice-border) 48%, var(--line)) !important;
-      background: color-mix(in srgb, var(--choice-fill) 38%, var(--night-rotation-base)) !important;
-      color: var(--night-rotation-ink) !important;
-    }
 
     @media (max-width: 1180px) {
       .masthead { grid-template-columns: 1fr; gap: 12px; }
@@ -2889,25 +2857,15 @@
 
     function makeStylesXml() {
       const theme = THEMES[els.theme.value] || THEMES.day;
-      const isNight = els.theme.value === "night";
-      const mixHex = (foreground, background, foregroundRatio) => {
-        const source = foreground.replace("#", "");
-        const base = background.replace("#", "");
-        return [0, 2, 4].map(index => {
-          const channel = Math.round(parseInt(source.slice(index, index + 2), 16) * foregroundRatio + parseInt(base.slice(index, index + 2), 16) * (1 - foregroundRatio));
-          return channel.toString(16).padStart(2, "0");
-        }).join("").toUpperCase();
-      };
-      const exportedRotationFill = rotation => isNight ? mixHex(rotation.fill, "#182126", 0.38) : rotation.fill.slice(1).toUpperCase();
       const fills = [
         `<fill><patternFill patternType="none"/></fill>`,
         `<fill><patternFill patternType="gray125"/></fill>`,
         `<fill><patternFill patternType="solid"><fgColor rgb="FF${theme.header}"/><bgColor indexed="64"/></patternFill></fill>`,
         `<fill><patternFill patternType="solid"><fgColor rgb="FF${theme.soft}"/><bgColor indexed="64"/></patternFill></fill>`,
-        ...ROTATIONS.map(rotation => `<fill><patternFill patternType="solid"><fgColor rgb="FF${exportedRotationFill(rotation)}"/><bgColor indexed="64"/></patternFill></fill>`),
+        ...ROTATIONS.map(rotation => `<fill><patternFill patternType="solid"><fgColor rgb="FF${rotation.fill.slice(1).toUpperCase()}"/><bgColor indexed="64"/></patternFill></fill>`),
       ];
       const rotationXfs = ROTATIONS.map((rotation, index) => {
-        const whiteInk = isNight || rotation.ink.toLowerCase() === "#ffffff";
+        const whiteInk = rotation.ink.toLowerCase() === "#ffffff";
         return `<xf numFmtId="0" fontId="${whiteInk ? 1 : 2}" fillId="${index + 4}" borderId="1" xfId="0" applyFill="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" horizontal="center" wrapText="1"/></xf>`;
       }).join("");
       return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
