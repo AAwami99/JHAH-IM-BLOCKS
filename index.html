@@ -586,6 +586,45 @@
     .fundamental-block-meta span { margin-top: 2px; color: var(--muted); font-size: 8px; }
     .fundamental-toggle { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; padding: 6px 8px; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--paper-2); font-size: 9px; font-weight: 780; }
     .fundamental-rotation-select { border-color: var(--choice-border, var(--line-strong)); background: var(--choice-fill, var(--paper)); color: var(--choice-ink, var(--ink)); font-weight: 720; }
+    .compare-dialog-view { display: flex; flex: 1; min-height: 0; flex-direction: column; }
+    .compare-dialog-view[hidden] { display: none; }
+    .compare-resident-controls { display: grid; grid-template-columns: 1fr 130px; gap: 8px; }
+    .compare-selection-status { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 10px 0 8px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 7px; background: var(--accent-soft); }
+    .compare-selection-status strong { display: block; font-size: 11px; }
+    .compare-selection-status span { display: block; margin-top: 2px; color: var(--muted); font-size: 9px; }
+    .compare-resident-list { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+    .compare-resident-option { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 9px; min-height: 48px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--paper); cursor: pointer; }
+    .compare-resident-option:hover, .compare-resident-option.is-selected { border-color: var(--accent); background: var(--accent-soft); }
+    .compare-resident-option input { width: 16px; height: 16px; accent-color: var(--accent); }
+    .compare-resident-option strong, .compare-resident-option small { display: block; }
+    .compare-resident-option strong { font-size: 11px; }
+    .compare-resident-option small { margin-top: 2px; color: var(--muted); font-size: 8px; }
+    .compare-report-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; padding: 12px; border: 1px solid var(--accent); border-radius: 8px; background: var(--accent-soft); }
+    .compare-report-summary strong, .compare-report-summary span { display: block; }
+    .compare-report-summary strong { font-size: 13px; }
+    .compare-report-summary span { margin-top: 3px; color: var(--muted); font-size: 9px; }
+    .compare-report-summary b { font-size: 23px; color: var(--accent); white-space: nowrap; }
+    .compare-report-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; margin: 15px 0 8px; }
+    .compare-report-heading strong { font-size: 12px; }
+    .compare-report-heading span { color: var(--muted); font-size: 9px; }
+    .compare-rotation-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .compare-rotation-card { overflow: hidden; border: 1px solid var(--choice-border, var(--line)); border-radius: 8px; background: var(--paper); }
+    .compare-rotation-name { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 39px; padding: 8px 10px; background: var(--choice-fill, var(--paper-2)); color: var(--choice-ink, var(--ink)); }
+    .compare-rotation-name strong { font-size: 10px; }
+    .compare-rotation-name b { font-size: 17px; }
+    .compare-person-counts { display: grid; gap: 4px; padding: 8px 10px; }
+    .compare-person-count { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 9px; }
+    .compare-person-count b { color: var(--ink); }
+    .compare-block-list { display: grid; gap: 7px; }
+    .compare-block-card { display: grid; grid-template-columns: 130px 1fr; gap: 10px; align-items: center; padding: 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
+    .compare-block-meta strong, .compare-block-meta span { display: block; }
+    .compare-block-meta strong { font-size: 11px; }
+    .compare-block-meta span { margin-top: 2px; color: var(--muted); font-size: 8px; }
+    .compare-block-assignments { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+    .compare-assignment-chip { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; min-height: 36px; padding: 7px 9px; border: 1px solid var(--choice-border, var(--line)); border-radius: 6px; background: var(--choice-fill, var(--paper-2)); color: var(--choice-ink, var(--ink)); }
+    .compare-assignment-chip span { overflow: hidden; font-size: 9px; font-weight: 760; text-overflow: ellipsis; white-space: nowrap; }
+    .compare-assignment-chip strong { font-size: 9px; text-align: right; }
+    .compare-assignment-chip.is-open { border-style: dashed; color: var(--muted); background: var(--paper-2); }
     .auth-field { display: grid; gap: 6px; }
     .auth-field span { color: var(--muted); font-size: 10px; font-weight: 760; letter-spacing: .06em; text-transform: uppercase; }
     .auth-error { min-height: 18px; margin: 7px 0 0; color: var(--danger); font-size: 11px; font-weight: 650; }
@@ -757,6 +796,8 @@
       .fundamental-manager-controls { grid-template-columns: 1fr; }
       .fundamental-editor-row { grid-template-columns: 94px minmax(0, 1fr); }
       .fundamental-toggle { grid-column: 1 / -1; justify-content: flex-start; }
+      .compare-resident-controls, .compare-resident-list, .compare-rotation-grid { grid-template-columns: 1fr; }
+      .compare-block-card, .compare-block-assignments { grid-template-columns: 1fr; }
       .request-row { grid-template-columns: 1fr auto; gap: 7px 10px; padding: 10px; }
       .request-row .block-name { grid-column: 1; }
       .request-row .block-dates { grid-column: 2; justify-items: end; text-align: right; }
@@ -862,6 +903,7 @@
           <button id="redoBtn" class="button chief-action" type="button" disabled>Redo</button>
           <button id="editCheckBtn" class="button chief-action" type="button">Check to edit</button>
           <button id="manageResidentsBtn" class="button chief-action" type="button">Manage residents</button>
+          <button id="compareResidentsBtn" class="button chief-action" type="button">Compare residents</button>
           <button id="manageFundamentalsBtn" class="button" type="button" hidden>Manage fundamentals</button>
           <button id="editRequestsBtn" class="button resident-action" type="button">Edit my requests</button>
           <button id="exportBtn" class="button" type="button">Export requested Excel</button>
@@ -1050,6 +1092,43 @@
       <button class="button" type="button" data-close-dialog="residentManagerDialog">Done</button>
       <button id="saveResidentManagementBtn" class="button primary" type="button">Save resident changes</button>
     </div>
+  </dialog>
+
+  <dialog id="compareResidentsDialog" aria-labelledby="compareResidentsTitle">
+    <section id="compareResidentPickerView" class="compare-dialog-view">
+      <div class="dialog-head">
+        <h3 id="compareResidentsTitle">Compare final rotations</h3>
+        <p>Select two or more residents to see their rotation counters together and compare all 13 final blocks.</p>
+      </div>
+      <div class="dialog-body">
+        <div class="compare-resident-controls">
+          <input id="compareResidentSearch" class="field-input" type="search" placeholder="Find a resident" autocomplete="off" />
+          <select id="compareResidentLevel" class="field-select" aria-label="Filter residents by year">
+            <option value="all">All years</option><option value="R4">R4</option><option value="R3">R3</option><option value="R2">R2</option><option value="R1">R1</option>
+          </select>
+        </div>
+        <div class="compare-selection-status">
+          <div><strong id="compareResidentCount">0 residents selected</strong><span>Select at least two residents.</span></div>
+          <button id="clearComparedResidentsBtn" class="button" type="button">Clear</button>
+        </div>
+        <div id="compareResidentList" class="compare-resident-list"></div>
+      </div>
+      <div class="dialog-actions">
+        <button class="button" type="button" data-close-dialog="compareResidentsDialog">Cancel</button>
+        <button id="showResidentComparisonBtn" class="button primary" type="button" disabled>View comparison</button>
+      </div>
+    </section>
+    <section id="compareResidentReportView" class="compare-dialog-view" hidden>
+      <div class="dialog-head">
+        <h3>Final rotation comparison</h3>
+        <p id="compareResidentReportSubtitle"></p>
+      </div>
+      <div id="compareResidentReport" class="dialog-body"></div>
+      <div class="dialog-actions">
+        <button id="backResidentComparisonBtn" class="button" type="button">Back to residents</button>
+        <button class="button primary" type="button" data-close-dialog="compareResidentsDialog">Done</button>
+      </div>
+    </section>
   </dialog>
 
   <dialog id="fundamentalManagerDialog" aria-labelledby="fundamentalManagerTitle">
@@ -1262,6 +1341,7 @@
     let pendingChiefView = null;
     let requestDraft = null;
     let fundamentalDraft = null;
+    let comparedResidentIds = new Set();
     let dirty = false;
     let zoomPercent = 100;
     let mobileScheduleMode = "cards";
@@ -1351,6 +1431,19 @@
       newResidentLevel: document.getElementById("newResidentLevel"),
       addResident: document.getElementById("addResidentBtn"),
       saveResidentManagement: document.getElementById("saveResidentManagementBtn"),
+      compareResidents: document.getElementById("compareResidentsBtn"),
+      compareResidentsDialog: document.getElementById("compareResidentsDialog"),
+      compareResidentPickerView: document.getElementById("compareResidentPickerView"),
+      compareResidentReportView: document.getElementById("compareResidentReportView"),
+      compareResidentSearch: document.getElementById("compareResidentSearch"),
+      compareResidentLevel: document.getElementById("compareResidentLevel"),
+      compareResidentCount: document.getElementById("compareResidentCount"),
+      clearComparedResidents: document.getElementById("clearComparedResidentsBtn"),
+      compareResidentList: document.getElementById("compareResidentList"),
+      showResidentComparison: document.getElementById("showResidentComparisonBtn"),
+      compareResidentReportSubtitle: document.getElementById("compareResidentReportSubtitle"),
+      compareResidentReport: document.getElementById("compareResidentReport"),
+      backResidentComparison: document.getElementById("backResidentComparisonBtn"),
       fundamentalManagerDialog: document.getElementById("fundamentalManagerDialog"),
       fundamentalSchedule: document.getElementById("fundamentalScheduleSelect"),
       fundamentalResident: document.getElementById("fundamentalResidentSelect"),
@@ -2195,6 +2288,69 @@
       setTimeout(() => els.newResidentName.focus(), 0);
     }
 
+    function comparedResidents() {
+      return actualResidents.filter(person => comparedResidentIds.has(person.id));
+    }
+
+    function renderCompareResidentPicker() {
+      const query = els.compareResidentSearch.value.trim().toLowerCase();
+      const level = els.compareResidentLevel.value;
+      const people = actualResidents.filter(person =>
+        (level === "all" || person.level === level) &&
+        (!query || person.name.toLowerCase().includes(query))
+      );
+      const selectedCount = comparedResidentIds.size;
+      els.compareResidentCount.textContent = `${selectedCount} resident${selectedCount === 1 ? "" : "s"} selected`;
+      els.showResidentComparison.disabled = selectedCount < 2;
+      els.clearComparedResidents.disabled = selectedCount === 0;
+      els.compareResidentList.innerHTML = people.length ? people.map(person => {
+        const selected = comparedResidentIds.has(person.id);
+        const assigned = person.assignments.filter(Boolean).length;
+        return `<label class="compare-resident-option ${selected ? "is-selected" : ""}"><input type="checkbox" data-compare-resident="${escapeHtml(person.id)}" ${selected ? "checked" : ""} /><span><strong>${escapeHtml(person.name)}</strong><small>${assigned} of 13 final blocks assigned</small></span>${levelBadge(person.level)}</label>`;
+      }).join("") : `<div class="resident-empty">No residents match this search.</div>`;
+    }
+
+    function openResidentComparison() {
+      if (!chiefSignedIn || activeView !== "actual") {
+        toast("Open Final Done by the Chief to compare residents.", "warn");
+        return;
+      }
+      comparedResidentIds = new Set();
+      els.compareResidentSearch.value = "";
+      els.compareResidentLevel.value = "all";
+      els.compareResidentPickerView.hidden = false;
+      els.compareResidentReportView.hidden = true;
+      renderCompareResidentPicker();
+      els.compareResidentsDialog.showModal();
+      setTimeout(() => els.compareResidentSearch.focus(), 0);
+    }
+
+    function renderResidentComparisonReport() {
+      const residents = comparedResidents();
+      if (residents.length < 2) {
+        toast("Select at least two residents to compare.", "warn");
+        return;
+      }
+      const totalAssignments = residents.reduce((total, person) => total + person.assignments.filter(Boolean).length, 0);
+      const rotationCards = ROTATIONS.map(rotation => {
+        const counts = residents.map(person => ({
+          person,
+          count: person.assignments.filter(value => value === rotation.name).length,
+        }));
+        return { rotation, counts, total: counts.reduce((sum, item) => sum + item.count, 0) };
+      }).filter(item => item.total > 0);
+      const rotationHtml = rotationCards.length ? rotationCards.map(item => `<article class="compare-rotation-card" style="${choiceStyle(item.rotation.name)}"><div class="compare-rotation-name"><strong>${escapeHtml(item.rotation.name)}</strong><b>${item.total}</b></div><div class="compare-person-counts">${item.counts.map(entry => `<div class="compare-person-count"><span>${escapeHtml(entry.person.name)}</span><b>${entry.count}</b></div>`).join("")}</div></article>`).join("") : `<div class="resident-empty">These residents do not have any final rotations yet.</div>`;
+      const blocksHtml = BLOCKS.map(([block, dates], blockIndex) => `<article class="compare-block-card"><div class="compare-block-meta"><strong>${escapeHtml(block)}</strong><span>${escapeHtml(dates)}</span></div><div class="compare-block-assignments">${residents.map(person => {
+        const value = person.assignments[blockIndex];
+        return `<div class="compare-assignment-chip ${value ? "" : "is-open"}" style="${choiceStyle(value)}"><span>${escapeHtml(person.name)} · ${escapeHtml(person.level)}</span><strong>${escapeHtml(value || "Open")}</strong></div>`;
+      }).join("")}</div></article>`).join("");
+      els.compareResidentReportSubtitle.textContent = residents.map(person => `${person.name} · ${person.level}`).join("  |  ");
+      els.compareResidentReport.innerHTML = `<div class="compare-report-summary"><div><strong>${residents.length} residents compared</strong><span>Final Done by the Chief · read-only comparison</span></div><b>${totalAssignments} slots</b></div><div class="compare-report-heading"><strong>Combined rotation counter</strong><span>Total first, then each resident's count</span></div><div class="compare-rotation-grid">${rotationHtml}</div><div class="compare-report-heading"><strong>Block-by-block comparison</strong><span>All 13 final blocks</span></div><div class="compare-block-list">${blocksHtml}</div>`;
+      els.compareResidentPickerView.hidden = true;
+      els.compareResidentReportView.hidden = false;
+      els.compareResidentReport.scrollTop = 0;
+    }
+
     function addResident() {
       const name = els.newResidentName.value.trim();
       const level = els.newResidentLevel.value;
@@ -2953,6 +3109,7 @@
     els.chiefAccess.addEventListener("click", () => chiefSignedIn ? signOutChief() : openChiefDialog("actual"));
     els.changeChiefPassword.addEventListener("click", openChangeChiefPasswordDialog);
     els.manageResidents.addEventListener("click", openResidentManager);
+    els.compareResidents.addEventListener("click", openResidentComparison);
     els.manageFundamentals.addEventListener("click", openFundamentalManager);
     els.addResident.addEventListener("click", addResident);
     els.saveResidentManagement.addEventListener("click", async () => {
@@ -2969,6 +3126,25 @@
     els.residentManagerList.addEventListener("click", event => {
       const row = event.target.closest("[data-manager-resident]");
       if (row && event.target.closest("[data-manager-remove]")) removeManagedResident(row.dataset.managerResident);
+    });
+    els.compareResidentSearch.addEventListener("input", renderCompareResidentPicker);
+    els.compareResidentLevel.addEventListener("change", renderCompareResidentPicker);
+    els.clearComparedResidents.addEventListener("click", () => {
+      comparedResidentIds.clear();
+      renderCompareResidentPicker();
+    });
+    els.compareResidentList.addEventListener("change", event => {
+      const checkbox = event.target.closest("[data-compare-resident]");
+      if (!checkbox) return;
+      if (checkbox.checked) comparedResidentIds.add(checkbox.dataset.compareResident);
+      else comparedResidentIds.delete(checkbox.dataset.compareResident);
+      renderCompareResidentPicker();
+    });
+    els.showResidentComparison.addEventListener("click", renderResidentComparisonReport);
+    els.backResidentComparison.addEventListener("click", () => {
+      els.compareResidentReportView.hidden = true;
+      els.compareResidentPickerView.hidden = false;
+      renderCompareResidentPicker();
     });
     els.fundamentalSchedule.addEventListener("change", () => {
       const residentId = els.fundamentalResident.value;
