@@ -412,10 +412,12 @@
     .table-note { padding: 8px 12px; background: var(--paper-2); color: var(--muted); font-size: 10px; }
 
     .card-bar-actions { display: flex; align-items: center; gap: 8px; }
-    #comparisonStatusFilter, #comparisonSortFilter, #specialtyRotationSelect { min-height: 32px; padding-block: 5px; font-size: 11px; }
+    #comparisonStatusFilter, #comparisonSortFilter, #specialtyViewModeSelect, #specialtyRotationSelect, #specialtyResidentSelect { min-height: 32px; padding-block: 5px; font-size: 11px; }
     #comparisonStatusFilter { width: 170px; }
     #comparisonSortFilter { width: 190px; }
+    #specialtyViewModeSelect { width: 145px; }
     #specialtyRotationSelect { width: 210px; }
+    #specialtyResidentSelect { width: 190px; }
     .comparison-summary-row { height: 54px !important; }
     .comparison-summary-row:hover td { background: var(--paper-2); }
     .comparison-score-cell { padding: 7px 10px !important; text-align: left !important; }
@@ -513,6 +515,28 @@
     .specialty-export-group { display: inline-flex; align-items: center; gap: 5px; padding-left: 8px; border-left: 1px solid var(--line); }
     .specialty-export-group .button { min-height: 32px; padding: 5px 8px; font-size: 10px; }
     .specialty-export-group .field-select { min-height: 32px; padding: 5px 7px; font-size: 10px; }
+    .journey-block { padding: 12px 14px !important; border-left: 5px solid var(--accent) !important; background: linear-gradient(135deg, var(--accent-soft), var(--paper)) !important; text-align: left !important; vertical-align: top; }
+    .journey-block strong, .journey-block span { display: block; }
+    .journey-block strong { color: var(--accent-strong); font-size: 12px; }
+    .journey-block span { margin-top: 4px; color: var(--muted); font-size: 9px; font-weight: 700; }
+    .journey-rotation { padding: 11px 13px !important; border-color: var(--choice-border, var(--line)) !important; background: var(--choice-fill, var(--paper-2)) !important; color: var(--choice-ink, var(--ink)) !important; text-align: left !important; vertical-align: top; }
+    .journey-rotation strong, .journey-rotation span { display: block; }
+    .journey-rotation strong { font-size: 12px; }
+    .journey-rotation span { margin-top: 4px; font-size: 8px; font-weight: 720; opacity: .72; text-transform: uppercase; }
+    .journey-team { padding: 8px 11px !important; text-align: left !important; vertical-align: top; }
+    .journey-colleague-list { display: grid; gap: 4px; }
+    .journey-colleague { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; min-height: 27px; padding: 5px 7px; border: 1px solid var(--line); border-radius: 6px; background: var(--paper-2); }
+    .journey-colleague.is-selected { border-color: var(--accent); background: var(--accent-soft); }
+    .journey-colleague strong { overflow: hidden; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+    .journey-colleague small { color: var(--accent-strong); font-size: 8px; font-weight: 850; }
+    .journey-colleague em { margin-left: 6px; color: var(--muted); font-size: 7px; font-style: normal; font-weight: 760; text-transform: uppercase; }
+    .journey-count { padding: 10px !important; background: var(--nav) !important; color: var(--nav-ink) !important; text-align: center !important; vertical-align: top; }
+    .journey-count strong, .journey-count span { display: block; }
+    .journey-count strong { font-size: 17px; }
+    .journey-count span { margin-top: 3px; font-size: 7px; font-weight: 750; opacity: .7; text-transform: uppercase; }
+    .mobile-journey-card { overflow: hidden; padding: 0; }
+    .mobile-journey-rotation { padding: 10px 11px; border-top: 1px solid var(--choice-border, var(--line)); border-bottom: 1px solid var(--choice-border, var(--line)); background: var(--choice-fill, var(--paper-2)); color: var(--choice-ink, var(--ink)); font-size: 12px; font-weight: 800; }
+    .mobile-journey-team { padding: 9px; }
 
     .utility-footer { display: flex; justify-content: flex-end; margin-top: 10px; }
 
@@ -945,15 +969,30 @@
                 <option value="name">Name · A to Z</option>
               </select>
             </label>
+            <label id="specialtyViewModeWrap" hidden>
+              <span class="sr-only">Choose specialty view</span>
+              <select id="specialtyViewModeSelect" class="field-select" aria-label="Choose specialty view">
+                <option value="rotation">By specialty</option>
+                <option value="resident">By resident</option>
+              </select>
+            </label>
             <label id="specialtySelectorWrap" hidden>
               <span class="sr-only">Select specialty rotation</span>
               <select id="specialtyRotationSelect" class="field-select" aria-label="Select specialty rotation"></select>
+            </label>
+            <label id="specialtyResidentWrap" hidden>
+              <span class="sr-only">Select resident journey</span>
+              <select id="specialtyResidentSelect" class="field-select" aria-label="Select resident journey"></select>
             </label>
             <div id="specialtyExportWrap" class="specialty-export-group" hidden>
               <button id="exportSpecialtyExcel" class="button" type="button">Specialty Excel</button>
               <button id="exportSpecialtyPdf" class="button" type="button">Specialty PDF</button>
               <button id="exportAllSpecialtiesExcel" class="button" type="button">All Specialties Excel</button>
               <button id="exportAllSpecialtiesPdf" class="button" type="button">All Specialties PDF</button>
+            </div>
+            <div id="residentJourneyExportWrap" class="specialty-export-group" hidden>
+              <button id="exportResidentJourneyExcel" class="button" type="button">Resident Excel</button>
+              <button id="exportResidentJourneyPdf" class="button primary" type="button">Resident PDF</button>
             </div>
             <button id="comparisonToggleAll" class="button" type="button" hidden>Show all details</button>
             <span id="modePill" class="mode-pill">Resident list editing</span>
@@ -1390,13 +1429,20 @@
       comparisonStatus: document.getElementById("comparisonStatusFilter"),
       comparisonSortWrap: document.getElementById("comparisonSortWrap"),
       comparisonSort: document.getElementById("comparisonSortFilter"),
+      specialtyViewModeWrap: document.getElementById("specialtyViewModeWrap"),
+      specialtyViewMode: document.getElementById("specialtyViewModeSelect"),
       specialtySelectorWrap: document.getElementById("specialtySelectorWrap"),
       specialtyRotation: document.getElementById("specialtyRotationSelect"),
+      specialtyResidentWrap: document.getElementById("specialtyResidentWrap"),
+      specialtyResident: document.getElementById("specialtyResidentSelect"),
       specialtyExportWrap: document.getElementById("specialtyExportWrap"),
       exportSpecialtyExcel: document.getElementById("exportSpecialtyExcel"),
       exportSpecialtyPdf: document.getElementById("exportSpecialtyPdf"),
       exportAllSpecialtiesExcel: document.getElementById("exportAllSpecialtiesExcel"),
       exportAllSpecialtiesPdf: document.getElementById("exportAllSpecialtiesPdf"),
+      residentJourneyExportWrap: document.getElementById("residentJourneyExportWrap"),
+      exportResidentJourneyExcel: document.getElementById("exportResidentJourneyExcel"),
+      exportResidentJourneyPdf: document.getElementById("exportResidentJourneyPdf"),
       table: document.getElementById("scheduleTable"),
       shell: document.getElementById("scheduleShell"),
       mobileSchedule: document.getElementById("mobileSchedule"),
@@ -1707,6 +1753,30 @@
       return activeView === "actual" || activeView === "specialty" ? actualResidents : requestedResidents;
     }
 
+    function specialtyMode() {
+      return els.specialtyViewMode.value === "resident" ? "resident" : "rotation";
+    }
+
+    function ensureSpecialtyResidentSelection() {
+      const current = els.specialtyResident.value;
+      const people = [...actualResidents].sort((a, b) => Number(b.level.slice(1)) - Number(a.level.slice(1)) || a.name.localeCompare(b.name));
+      els.specialtyResident.innerHTML = people.map(person => `<option value="${escapeHtml(person.id)}">${escapeHtml(person.name)} · ${escapeHtml(person.level)}</option>`).join("");
+      els.specialtyResident.value = people.some(person => person.id === current) ? current : (people[0]?.id || "");
+    }
+
+    function selectedSpecialtyResident() {
+      return actualResidents.find(person => person.id === els.specialtyResident.value) || actualResidents[0] || null;
+    }
+
+    function residentJourneyRows(person = selectedSpecialtyResident()) {
+      if (!person) return [];
+      return BLOCKS.map(([block, dates], blockIndex) => {
+        const rotation = person.assignments[blockIndex] || "";
+        const colleagues = rotation ? actualResidents.filter(candidate => candidate.id !== person.id && candidate.assignments[blockIndex] === rotation) : [];
+        return { block, dates, blockIndex, rotation, resident: person, colleagues, team: [person, ...colleagues] };
+      });
+    }
+
     function filteredIndexes() {
       const query = els.search.value.trim().toLowerCase();
       const level = els.level.value;
@@ -1777,6 +1847,15 @@
         els.viewTitle.textContent = "Chief review · Request vs. Actual";
         els.viewDescription.textContent = "Chief review for R2–R4 residents. Each review includes block arrangement and total counts for every rotation.";
         els.metrics.innerHTML = metric(`${average}%`, "Overall match") + metric(exact, "Exact residents") + metric(differences, "Block differences") + metric(rotationVariances, "Rotation variances");
+      } else if (specialtyMode() === "resident") {
+        const person = selectedSpecialtyResident();
+        const rows = residentJourneyRows(person);
+        const assignedRows = rows.filter(row => row.rotation);
+        const colleagueAssignments = assignedRows.reduce((sum, row) => sum + row.colleagues.length, 0);
+        const uniqueRotations = new Set(assignedRows.map(row => row.rotation)).size;
+        els.viewTitle.textContent = person ? `${person.name} · Resident Rotation Journey` : "Resident Rotation Journey";
+        els.viewDescription.textContent = "A chief-only annual view of the selected resident's final rotations, with every colleague listed separately beside their R level.";
+        els.metrics.innerHTML = metric(assignedRows.length, "Assigned blocks") + metric(uniqueRotations, "Rotations") + metric(colleagueAssignments, "Colleague matches") + metric(BLOCKS.length - assignedRows.length, "Open blocks");
       } else {
         const rotation = els.specialtyRotation.value || "Night Float";
         const counts = BLOCKS.map((_, blockIndex) => actualResidents.filter(person => person.assignments[blockIndex] === rotation).length);
@@ -1796,7 +1875,9 @@
 
     function renderHead() {
       if (activeView === "specialty") {
-        els.head.innerHTML = `<tr><th scope="col" colspan="4">Block and dates</th><th scope="col" colspan="11">Assigned residents</th><th scope="col" colspan="2">Count</th></tr>`;
+        els.head.innerHTML = specialtyMode() === "resident"
+          ? `<tr><th scope="col" colspan="3">Block and dates</th><th scope="col" colspan="4">Final rotation</th><th scope="col" colspan="8">Resident and colleagues · one per line</th><th scope="col" colspan="2">Team</th></tr>`
+          : `<tr><th scope="col" colspan="4">Block and dates</th><th scope="col" colspan="11">Assigned residents</th><th scope="col" colspan="2">Count</th></tr>`;
         return;
       }
       if (activeView === "comparison") {
@@ -1928,8 +2009,18 @@
       return `<span class="mobile-assignment ${value ? "" : "is-empty"} ${protectedCell ? "is-protected" : ""}" style="${style}">${escapeHtml(label)}</span>`;
     }
 
+    function journeyRosterHtml(row) {
+      return `<div class="journey-colleague-list">${row.team.map(person => `<div class="journey-colleague ${person.id === row.resident.id ? "is-selected" : ""}"><strong>${escapeHtml(person.name)}${person.id === row.resident.id ? "<em>Selected</em>" : ""}</strong><small>${escapeHtml(person.level)}</small></div>`).join("")}</div>`;
+    }
+
     function renderMobileSchedule() {
       if (activeView === "specialty") {
+        if (specialtyMode() === "resident") {
+          const person = selectedSpecialtyResident();
+          const rows = residentJourneyRows(person);
+          els.mobileSchedule.innerHTML = person ? `<div class="mobile-specialty-list">${rows.map(row => `<section class="mobile-specialty-card mobile-journey-card"><div class="mobile-specialty-head"><div><strong>${escapeHtml(row.block)}</strong><span>${escapeHtml(row.dates)}</span></div><span>${row.colleagues.length} colleague${row.colleagues.length === 1 ? "" : "s"}</span></div><div class="mobile-journey-rotation" style="${choiceStyle(row.rotation)}">${escapeHtml(row.rotation || "Open / no final rotation")}</div><div class="mobile-journey-team">${journeyRosterHtml(row)}</div></section>`).join("")}</div>` : `<div class="resident-empty">No residents are available.</div>`;
+          return;
+        }
         const rotation = els.specialtyRotation.value || "Night Float";
         els.mobileSchedule.innerHTML = `<div class="mobile-specialty-list">${BLOCKS.map(([block, dates], blockIndex) => {
           const residents = actualResidents.filter(person => person.assignments[blockIndex] === rotation);
@@ -1960,6 +2051,13 @@
     function renderBody() {
       renderMobileSchedule();
       if (activeView === "specialty") {
+        if (specialtyMode() === "resident") {
+          const person = selectedSpecialtyResident();
+          const rows = residentJourneyRows(person);
+          els.body.innerHTML = person ? rows.map(row => `<tr><td class="journey-block" colspan="3"><strong>${escapeHtml(row.block)}</strong><span>${escapeHtml(row.dates)}</span></td><td class="journey-rotation" colspan="4" style="${choiceStyle(row.rotation)}"><strong>${escapeHtml(row.rotation || "Open / no final rotation")}</strong><span>${row.rotation ? "Final chief assignment" : "No assignment"}</span></td><td class="journey-team" colspan="8">${journeyRosterHtml(row)}</td><td class="journey-count" colspan="2"><strong>${row.team.length}</strong><span>Team</span></td></tr>`).join("") : `<tr><td colspan="17" class="resident-empty">No residents are available.</td></tr>`;
+          els.visibleStatus.textContent = person ? `${person.name} · ${person.level} · final rotations and colleagues across all 13 blocks` : "No resident selected";
+          return;
+        }
         const rotation = els.specialtyRotation.value || "Night Float";
         els.body.innerHTML = BLOCKS.map(([block, dates], blockIndex) => {
           const residents = actualResidents.filter(person => person.assignments[blockIndex] === rotation);
@@ -2061,6 +2159,7 @@
       const isRequested = activeView === "requested";
       const isComparison = activeView === "comparison";
       const isSpecialty = activeView === "specialty";
+      const isResidentJourney = isSpecialty && specialtyMode() === "resident";
       document.querySelectorAll(".chief-action").forEach(button => button.hidden = !isActual);
       document.querySelectorAll(".resident-action").forEach(button => button.hidden = !isRequested);
       els.manageFundamentals.hidden = !chiefSignedIn || (!isRequested && !isActual);
@@ -2073,8 +2172,11 @@
       els.comparisonToggleAll.hidden = !isComparison;
       els.comparisonFilterWrap.hidden = !isComparison;
       els.comparisonSortWrap.hidden = !isComparison;
-      els.specialtySelectorWrap.hidden = !isSpecialty;
-      els.specialtyExportWrap.hidden = !isSpecialty;
+      els.specialtyViewModeWrap.hidden = !isSpecialty;
+      els.specialtySelectorWrap.hidden = !isSpecialty || isResidentJourney;
+      els.specialtyResidentWrap.hidden = !isResidentJourney;
+      els.specialtyExportWrap.hidden = !isSpecialty || isResidentJourney;
+      els.residentJourneyExportWrap.hidden = !isResidentJourney;
       const r1FilterOption = els.level.querySelector('option[value="R1"]');
       if (r1FilterOption) r1FilterOption.hidden = isComparison;
       const mobileR1FilterOption = els.mobileLevel.querySelector('option[value="R1"]');
@@ -2099,10 +2201,13 @@
         els.modePill.textContent = els.comparisonSort.options[els.comparisonSort.selectedIndex].text;
         els.tableNote.textContent = "Filter or sort the compact review list, then select a score to reveal only that resident's differing blocks. R1 schedules are excluded.";
       } else {
+        const person = selectedSpecialtyResident();
         const rotation = els.specialtyRotation.value || "Night Float";
-        els.scheduleHeading.textContent = `${rotation} · final residents by block`;
+        els.scheduleHeading.textContent = isResidentJourney ? `${person?.name || "Resident"} · final rotation journey` : `${rotation} · final residents by block`;
         els.modePill.textContent = "Final chief data";
-        els.tableNote.textContent = "This vertical, department-ready roster is generated from Final Done by the Chief and is available only in the unlocked chief workspace.";
+        els.tableNote.textContent = isResidentJourney
+          ? "Each block shows the selected resident's final rotation followed by every colleague on that rotation, one person per line with their R level."
+          : "This vertical, department-ready roster is generated from Final Done by the Chief and is available only in the unlocked chief workspace.";
       }
     }
 
@@ -2135,6 +2240,7 @@
     }
 
     function render() {
+      if (activeView === "specialty") ensureSpecialtyResidentSelection();
       renderContext();
       renderHead();
       renderPalette();
@@ -2842,6 +2948,139 @@
       toast(`${rotation} exported to Excel.`, "success");
     }
 
+    function makeResidentJourneySheetXml(person = selectedSpecialtyResident()) {
+      const rows = residentJourneyRows(person);
+      const rotationStyleIndex = new Map(ROTATIONS.map((rotation, index) => [rotation.name, index + 7]));
+      const cell = (row, column, value, style = 5) => {
+        const reference = `${columnName(column)}${row}`;
+        return `<c r="${reference}" t="inlineStr" s="${style}"><is><t>${xmlEscape(value)}</t></is></c>`;
+      };
+      const sheetRows = [
+        `<row r="1" ht="32" customHeight="1">${cell(1, 1, `${person.name} · ${person.level} · Final Rotation Journey 2026–2027`, 1)}</row>`,
+        `<row r="2" ht="23" customHeight="1">${cell(2, 1, "Block", 2)}${cell(2, 2, "Dates", 2)}${cell(2, 3, "Final rotation", 2)}${cell(2, 4, "Resident / colleague", 2)}${cell(2, 5, "R level", 2)}${cell(2, 6, "Role", 2)}</row>`,
+      ];
+      let rowNumber = 3;
+      rows.forEach(row => {
+        row.team.forEach((teamMember, index) => {
+          const rotationStyle = row.rotation ? rotationStyleIndex.get(row.rotation) || 4 : 4;
+          sheetRows.push(`<row r="${rowNumber}" ht="22" customHeight="1">${cell(rowNumber, 1, index ? "" : row.block, 4)}${cell(rowNumber, 2, index ? "" : row.dates, 4)}${cell(rowNumber, 3, index ? "" : row.rotation || "Open / no final rotation", rotationStyle)}${cell(rowNumber, 4, teamMember.name, 4)}${cell(rowNumber, 5, teamMember.level, 4)}${cell(rowNumber, 6, teamMember.id === person.id ? "Selected resident" : "Colleague", 4)}</row>`);
+          rowNumber++;
+        });
+      });
+      return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0" showGridLines="0"><pane ySplit="2" topLeftCell="A3" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols><col min="1" max="1" width="14" customWidth="1"/><col min="2" max="2" width="24" customWidth="1"/><col min="3" max="3" width="24" customWidth="1"/><col min="4" max="4" width="25" customWidth="1"/><col min="5" max="5" width="11" customWidth="1"/><col min="6" max="6" width="19" customWidth="1"/></cols><sheetData>${sheetRows.join("")}</sheetData><mergeCells count="1"><mergeCell ref="A1:F1"/></mergeCells><pageMargins left="0.25" right="0.25" top="0.5" bottom="0.5" header="0.2" footer="0.2"/><pageSetup orientation="portrait" fitToWidth="1" fitToHeight="0"/></worksheet>`;
+    }
+
+    function exportResidentJourneyExcel() {
+      const person = selectedSpecialtyResident();
+      if (!person) { toast("Select a resident first.", "warn"); return; }
+      const files = {
+        "[Content_Types].xml": `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`,
+        "_rels/.rels": `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`,
+        "xl/workbook.xml": `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Resident journey" sheetId="1" r:id="rId1"/></sheets></workbook>`,
+        "xl/_rels/workbook.xml.rels": `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`,
+        "xl/worksheets/sheet1.xml": makeResidentJourneySheetXml(person),
+        "xl/styles.xml": makeStylesXml(),
+      };
+      const filename = person.name.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "") || "Resident";
+      downloadBlob(makeZip(files), `JHAH-${filename}-Final-Rotation-Journey-2027.xlsx`);
+      toast(`${person.name}'s rotation journey exported to Excel.`, "success");
+    }
+
+    function makeResidentJourneyPdf(person = selectedSpecialtyResident()) {
+      const rows = residentJourneyRows(person).map(row => ({ ...row, height: Math.max(64, 40 + row.team.length * 15) }));
+      const pdfEscape = value => String(value ?? "").replace(/[^\x20-\x7E]/g, " ").replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
+      const truncate = (value, max) => String(value).length > max ? `${String(value).slice(0, max - 1)}...` : String(value);
+      const pdfColor = hex => {
+        const value = String(hex || "#edf3f3").replace("#", "");
+        return [0, 2, 4].map(index => (parseInt(value.slice(index, index + 2), 16) / 255).toFixed(3)).join(" ");
+      };
+      const text = (value, x, y, font = "F1", size = 10, color = "0.08 0.14 0.16") => `BT /${font} ${size} Tf ${color} rg 1 0 0 1 ${x} ${y} Tm (${pdfEscape(value)}) Tj ET`;
+      const fill = (color, x, y, width, height) => `${color} rg ${x} ${y} ${width} ${height} re f`;
+      const stroke = (color, x, y, width, height, lineWidth = 0.6) => `${color} RG ${lineWidth} w ${x} ${y} ${width} ${height} re S`;
+      const pages = [];
+      let currentPage = [];
+      let usedHeight = 0;
+      rows.forEach(row => {
+        const required = row.height + 9;
+        if (currentPage.length && usedHeight + required > 596) {
+          pages.push(currentPage);
+          currentPage = [];
+          usedHeight = 0;
+        }
+        currentPage.push(row);
+        usedHeight += required;
+      });
+      if (currentPage.length) pages.push(currentPage);
+      const generated = new Date().toLocaleString("en-US", { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+      const pageStreams = pages.map((pageRows, pageIndex) => {
+        const stream = [
+          fill("0.055 0.220 0.255", 0, 714, 612, 78),
+          fill("0.075 0.420 0.420", 0, 710, 612, 4),
+          text("JHAH RESIDENT BLOCK DISTRIBUTION", 40, 760, "F2", 15, "1 1 1"),
+          text("ACADEMIC CYCLE 2026-2027  |  FINAL ROTATION JOURNEY", 40, 741, "F1", 8.5, "0.76 0.91 0.90"),
+          text(truncate(person.name, 28), 408, 760, "F2", 14, "1 1 1"),
+          text(`${person.level} resident`, 486, 741, "F1", 9, "0.76 0.91 0.90"),
+          fill("0.925 0.955 0.955", 40, 677, 532, 24),
+          text("BLOCK / DATES", 49, 686, "F2", 7.5, "0.055 0.220 0.255"),
+          text("FINAL ROTATION", 150, 686, "F2", 7.5, "0.055 0.220 0.255"),
+          text("RESIDENT AND COLLEAGUES", 302, 686, "F2", 7.5, "0.055 0.220 0.255"),
+          text("R LEVEL", 522, 686, "F2", 7.5, "0.055 0.220 0.255"),
+        ];
+        let top = 668;
+        pageRows.forEach(row => {
+          const bottom = top - row.height;
+          const rotation = rotationByName(row.rotation);
+          stream.push(fill("0.985 0.990 0.990", 40, bottom, 532, row.height));
+          stream.push(stroke("0.79 0.85 0.86", 40, bottom, 532, row.height));
+          stream.push(fill(rotation ? pdfColor(rotation.fill) : "0.945 0.960 0.960", 136, bottom, 148, row.height));
+          stream.push(`0.79 0.85 0.86 RG 0.6 w 136 ${bottom} m 136 ${top} l S`);
+          stream.push(`0.79 0.85 0.86 RG 0.6 w 284 ${bottom} m 284 ${top} l S`);
+          stream.push(`0.79 0.85 0.86 RG 0.6 w 510 ${bottom} m 510 ${top} l S`);
+          stream.push(text(row.block, 49, top - 22, "F2", 10, "0.055 0.220 0.255"));
+          stream.push(text(row.dates, 49, top - 38, "F1", 7.5, "0.34 0.42 0.44"));
+          stream.push(text(truncate(row.rotation || "Open / no final rotation", 23), 148, top - 25, "F2", 10, rotation ? pdfColor(rotation.ink) : "0.34 0.42 0.44"));
+          row.team.forEach((teamMember, memberIndex) => {
+            const lineY = top - 22 - memberIndex * 15;
+            if (teamMember.id === person.id) {
+              stream.push(fill("0.900 0.955 0.950", 291, lineY - 5, 210, 13));
+              stream.push(text(`${truncate(teamMember.name, 25)}  [SELECTED]`, 299, lineY, "F2", 8.5, "0.055 0.330 0.330"));
+            } else {
+              stream.push(text(truncate(teamMember.name, 31), 299, lineY, "F1", 8.5, "0.13 0.20 0.22"));
+            }
+            stream.push(text(teamMember.level, 528, lineY, "F2", 8.5, teamMember.id === person.id ? "0.055 0.330 0.330" : "0.25 0.34 0.36"));
+            if (memberIndex < row.team.length - 1) stream.push(`0.89 0.92 0.93 RG 0.4 w 295 ${lineY - 8} m 563 ${lineY - 8} l S`);
+          });
+          top = bottom - 9;
+        });
+        stream.push(`0.55 0.62 0.64 RG 0.5 w 40 46 m 572 46 l S`);
+        stream.push(text(`Generated ${generated}`, 40, 29, "F1", 8, "0.35 0.43 0.45"));
+        stream.push(text("Final Done by the Chief", 238, 29, "F2", 8, "0.055 0.330 0.330"));
+        stream.push(text(`Page ${pageIndex + 1} of ${pages.length}`, 514, 29, "F1", 8, "0.35 0.43 0.45"));
+        return stream.join("\n");
+      });
+      const objects = ["<< /Type /Catalog /Pages 2 0 R >>", `<< /Type /Pages /Count ${pages.length} /Kids [${pages.map((_, index) => `${5 + index * 2} 0 R`).join(" ")}] >>`, "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>", "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>"];
+      pageStreams.forEach((stream, index) => {
+        const pageId = 5 + index * 2;
+        const contentId = pageId + 1;
+        objects.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${contentId} 0 R >>`);
+        objects.push(`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`);
+      });
+      let pdf = "%PDF-1.4\n";
+      const offsets = [0];
+      objects.forEach((object, index) => { offsets.push(pdf.length); pdf += `${index + 1} 0 obj\n${object}\nendobj\n`; });
+      const xref = pdf.length;
+      pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n${offsets.slice(1).map(offset => `${String(offset).padStart(10, "0")} 00000 n \n`).join("")}trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+      return new Blob([pdf], { type: "application/pdf" });
+    }
+
+    function exportResidentJourneyPdf() {
+      const person = selectedSpecialtyResident();
+      if (!person) { toast("Select a resident first.", "warn"); return; }
+      const filename = person.name.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "") || "Resident";
+      downloadBlob(makeResidentJourneyPdf(person), `JHAH-${filename}-Final-Rotation-Journey-2027.pdf`);
+      toast(`${person.name}'s polished rotation journey exported to PDF.`, "success");
+    }
+
     function makeSpecialtyPdf(rotationOverride = els.specialtyRotation.value || "Night Float") {
       const isAllSpecialties = rotationOverride === "__all__";
       const rotation = rotationOverride;
@@ -3293,10 +3532,25 @@
       renderBody();
       renderControls();
     });
+    els.specialtyViewMode.addEventListener("change", () => {
+      ensureSpecialtyResidentSelection();
+      renderContext();
+      renderHead();
+      renderBody();
+      renderControls();
+    });
+    els.specialtyResident.addEventListener("change", () => {
+      renderContext();
+      renderHead();
+      renderBody();
+      renderControls();
+    });
     els.exportSpecialtyExcel.addEventListener("click", exportSpecialtyExcel);
     els.exportSpecialtyPdf.addEventListener("click", exportSpecialtyPdf);
     els.exportAllSpecialtiesExcel.addEventListener("click", exportAllSpecialtiesExcel);
     els.exportAllSpecialtiesPdf.addEventListener("click", exportAllSpecialtiesPdf);
+    els.exportResidentJourneyExcel.addEventListener("click", exportResidentJourneyExcel);
+    els.exportResidentJourneyPdf.addEventListener("click", exportResidentJourneyPdf);
     els.comparisonToggleAll.addEventListener("click", () => {
       allComparisonExpanded = !allComparisonExpanded;
       expandedComparisons.clear();
