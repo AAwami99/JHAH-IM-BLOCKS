@@ -576,7 +576,7 @@
     .dialog-body { flex: 1; min-height: 0; padding: 15px 18px; overflow: auto; }
     .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--line); background: var(--paper-2); }
     .dialog-filter { display: grid; grid-template-columns: 1fr 130px; gap: 8px; margin-bottom: 12px; }
-    #changeLogDialog { width: min(780px, calc(100vw - 30px)); }
+    #changeLogDialog { width: min(920px, calc(100vw - 30px)); }
     .audit-status {
       display: flex;
       align-items: center;
@@ -615,7 +615,7 @@
     .audit-facts { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
     .audit-fact { padding: 3px 6px; border: 1px solid var(--line); border-radius: 999px; background: var(--paper-2); color: var(--muted); font-size: 8px; font-weight: 700; }
     .audit-cell-changes { display: grid; gap: 4px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); }
-    .audit-cell-change { display: grid; grid-template-columns: minmax(100px, .8fr) 58px minmax(0, 1.3fr); gap: 7px; color: var(--muted); font-size: 9px; }
+    .audit-cell-change { display: grid; grid-template-columns: minmax(120px, .8fr) 130px minmax(0, 1.3fr); gap: 9px; padding: 3px 0; color: var(--muted); font-size: 9px; }
     .audit-cell-change strong { overflow: hidden; color: var(--ink); text-overflow: ellipsis; white-space: nowrap; }
     .audit-revision { min-width: 54px; color: var(--muted); font-size: 8px; text-align: right; }
     .chief-entry {
@@ -1297,7 +1297,7 @@
       <div class="audit-status">
         <div class="audit-status-copy">
           <strong id="changeLogStatus">Checking the shared server…</strong>
-          <span>Only successful saves are recorded; conflicting attempts are never added.</span>
+          <span>Alerts remain active until Dismiss notification is pressed. Every entry stays in this history.</span>
         </div>
         <span class="audit-live">Live</span>
       </div>
@@ -1305,7 +1305,8 @@
     </div>
     <div class="dialog-actions">
       <button id="refreshChangeLogBtn" class="button" type="button">Refresh</button>
-      <button class="button primary" type="button" data-close-dialog="changeLogDialog">Done</button>
+      <button id="dismissChangeLogBtn" class="button primary" type="button" hidden>Dismiss notification</button>
+      <button class="button" type="button" data-close-dialog="changeLogDialog">Done</button>
     </div>
   </dialog>
 
@@ -1421,7 +1422,6 @@
 
     const STORAGE_KEY = "jhah-resident-block-distribution-2027-v2";
     const LEGACY_KEY = "jhah-resident-block-distribution-2027-v1";
-    const AUDIT_SEEN_KEY = "jhah-chief-audit-seen-2027";
     const CHIEF_TOKEN_KEY = "jhah-chief-token-2027";
     const BASELINE_FUNDAMENTAL_CELLS = new Set();
     BASELINE.forEach(person => person.assignments.forEach((value, index) => {
@@ -1485,13 +1485,13 @@
     let redoStack = [];
     let auditEvents = [];
     let auditLatestId = 0;
+    let auditDismissedId = 0;
+    let auditPendingCount = 0;
+    let auditPromptedThroughId = 0;
     let auditPollTimer = null;
     let auditLoading = false;
+    let auditDismissLoading = false;
     let auditErrorMessage = "";
-    let auditSeenId = (() => {
-      try { return Number(localStorage.getItem(AUDIT_SEEN_KEY)) || 0; }
-      catch { return 0; }
-    })();
 
     const els = {
       theme: document.getElementById("themeSelect"),
@@ -1579,6 +1579,7 @@
       changeLogStatus: document.getElementById("changeLogStatus"),
       changeLogList: document.getElementById("changeLogList"),
       refreshChangeLog: document.getElementById("refreshChangeLogBtn"),
+      dismissChangeLog: document.getElementById("dismissChangeLogBtn"),
       manageResidents: document.getElementById("manageResidentsBtn"),
       residentManagerDialog: document.getElementById("residentManagerDialog"),
       residentManagerList: document.getElementById("residentManagerList"),
@@ -1818,47 +1819,79 @@
       return facts;
     }
 
+    function auditDisplaySummary(event, details = {}) {
+      if (details.requestMetadataChanged && !details.requestedAssignmentsChanged && !details.actualAssignmentsChanged && event.actorType === "resident") {
+        return `${event.actorName || "Resident"} saved a request update without changing any rotation.`;
+      }
+      return event.summary;
+    }
+
+    function auditDetailRows(event, details = {}) {
+      const assignmentRows = (Array.isArray(details.assignmentChanges) ? details.assignmentChanges : []).map(change => ({
+        name: `${change.residentName || "Resident"}${change.level ? ` · ${change.level}` : ""}`,
+        context: `${auditAreaLabel(change.schedule)} · Block ${Number(change.block) || ""}`,
+        change: `${change.from || "Open"} → ${change.to || "Open"}`,
+      }));
+      const profileRows = [
+        ...(details.residentsAdded || []).map(person => ({ name: person.name || "Resident", context: "Resident profile", change: `Added${person.level ? ` · ${person.level}` : ""}` })),
+        ...(details.residentsRemoved || []).map(person => ({ name: person.name || "Resident", context: "Resident profile", change: `Removed${person.level ? ` · ${person.level}` : ""}` })),
+        ...(details.residentsRenamed || []).map(person => ({ name: person.to || "Resident", context: "Name changed", change: `${person.from || "Previous name"} → ${person.to || "New name"}` })),
+        ...(details.residentLevelsChanged || []).map(person => ({ name: person.name || "Resident", context: "Year changed", change: `${person.from || "Previous year"} → ${person.to || "New year"}` })),
+      ];
+      const fundamentalRows = (details.fundamentalChanges || []).map(change => ({
+        name: `${change.residentName || "Resident"}${change.level ? ` · ${change.level}` : ""}`,
+        context: `${auditAreaLabel(change.schedule)}${change.block ? ` · Block ${change.block}` : ""}`,
+        change: `${change.action || "Fundamental updated"}${change.rotation ? ` · ${change.rotation}` : ""}`,
+      }));
+      let requestRows = (details.requestSubmissions || []).map(change => ({
+        name: `${change.residentName || event.actorName || "Resident"}${change.level ? ` · ${change.level}` : ""}`,
+        context: "Request record",
+        change: `${change.action || "Request updated"}${details.requestedAssignmentsChanged ? "" : " · Rotation values unchanged"}`,
+      }));
+      if (!requestRows.length && details.requestMetadataChanged && !details.requestedAssignmentsChanged) {
+        requestRows = [{ name: event.actorName || "Resident", context: "Request record", change: "Saved again · Rotation values unchanged" }];
+      }
+      const otherRows = [
+        ...(details.themeChange ? [{ name: "Shared theme", context: "Display setting", change: `${details.themeChange.from || "Previous"} → ${details.themeChange.to || "New"}` }] : details.themeChanged ? [{ name: "Shared theme", context: "Display setting", change: "Theme updated" }] : []),
+        ...(details.baselineRestored ? [{ name: "Reference baseline", context: "Entire schedule", change: "Baseline restored by the chief" }] : []),
+      ];
+      return [...assignmentRows, ...profileRows, ...fundamentalRows, ...requestRows, ...otherRows];
+    }
+
     function renderAuditLog() {
-      const unseen = auditEvents.filter(event => Number(event.id) > auditSeenId).length;
+      const pending = auditPendingCount;
       els.changeLog.hidden = !chiefSignedIn;
-      els.changeLogBadge.hidden = !unseen;
-      els.changeLogBadge.textContent = unseen > 99 ? "99+" : String(unseen);
-      els.changeLog.classList.toggle("has-new", unseen > 0);
-      els.changeLog.setAttribute("aria-label", unseen ? `Open the chief change log. ${unseen} unseen change${unseen === 1 ? "" : "s"}.` : "Open the chief change log");
+      els.changeLogBadge.hidden = !pending;
+      els.changeLogBadge.textContent = pending > 99 ? "99+" : String(pending);
+      els.changeLog.classList.toggle("has-new", pending > 0);
+      els.changeLog.setAttribute("aria-label", pending ? `Open the chief change log. ${pending} new change${pending === 1 ? "" : "s"} awaiting dismissal.` : "Open the chief change log");
       els.changeLog.title = auditEvents[0]?.summary || "Review successful shared saves";
+      els.dismissChangeLog.hidden = !pending;
+      els.dismissChangeLog.disabled = auditDismissLoading || !pending;
+      els.dismissChangeLog.textContent = auditDismissLoading ? "Dismissing…" : "Dismiss notification";
       if (!auditEvents.length) {
         els.changeLogStatus.textContent = auditLoading ? "Checking the shared server…" : auditErrorMessage || "No changes have been logged yet.";
         els.changeLogList.innerHTML = `<div class="audit-empty">${escapeHtml(auditErrorMessage || "The first successful shared save will appear here automatically.")}</div>`;
         return;
       }
-      els.changeLogStatus.textContent = auditErrorMessage || `${auditEvents.length} latest change${auditEvents.length === 1 ? "" : "s"} · Last update ${formatTimestamp(auditEvents[0].occurredAt)}`;
+      els.changeLogStatus.textContent = auditErrorMessage || (pending
+        ? `${pending} new change${pending === 1 ? "" : "s"} awaiting dismissal · Last update ${formatTimestamp(auditEvents[0].occurredAt)}`
+        : `${auditEvents.length} latest change${auditEvents.length === 1 ? "" : "s"} · No pending notification`);
       els.changeLogList.innerHTML = auditEvents.map(event => {
         const details = event.details || {};
         const facts = auditFacts(details);
-        const cellChanges = Array.isArray(details.assignmentChanges) ? details.assignmentChanges.slice(0, 5) : [];
-        const profileChanges = [
-          ...(details.residentsAdded || []).map(person => ({ name: person.name, context: person.level, change: "Resident added" })),
-          ...(details.residentsRemoved || []).map(person => ({ name: person.name, context: person.level, change: "Resident removed" })),
-          ...(details.residentsRenamed || []).map(person => ({ name: person.to, context: "Renamed", change: `${person.from} → ${person.to}` })),
-          ...(details.residentLevelsChanged || []).map(person => ({ name: person.name, context: "Year", change: `${person.from} → ${person.to}` })),
-        ].slice(0, 5);
-        return `<article class="audit-event ${Number(event.id) > auditSeenId ? "is-unseen" : ""}">
+        const detailRows = auditDetailRows(event, details);
+        return `<article class="audit-event ${Number(event.id) > auditDismissedId ? "is-unseen" : ""}">
           <div class="audit-avatar ${event.actorType === "resident" ? "is-resident" : ""}" aria-hidden="true">${event.actorType === "chief" ? "CH" : event.actorType === "resident" ? "R" : "SH"}</div>
           <div class="audit-main">
-            <p class="audit-summary">${escapeHtml(event.summary)}</p>
+            <p class="audit-summary">${escapeHtml(auditDisplaySummary(event, details))}</p>
             <div class="audit-meta"><span>${escapeHtml(formatTimestamp(event.occurredAt))}</span><span class="audit-area">${escapeHtml(auditAreaLabel(event.area))}</span></div>
             ${facts.length ? `<div class="audit-facts">${facts.map(fact => `<span class="audit-fact">${escapeHtml(fact)}</span>`).join("")}</div>` : ""}
-            ${cellChanges.length || profileChanges.length ? `<div class="audit-cell-changes">${cellChanges.map(change => `<div class="audit-cell-change"><strong>${escapeHtml(change.residentName || "Resident")} · ${escapeHtml(change.level || "")}</strong><span>Block ${Number(change.block) || ""}</span><span>${escapeHtml(change.from || "Open")} → ${escapeHtml(change.to || "Open")}</span></div>`).join("")}${profileChanges.map(change => `<div class="audit-cell-change"><strong>${escapeHtml(change.name || "Resident")}</strong><span>${escapeHtml(change.context || "")}</span><span>${escapeHtml(change.change)}</span></div>`).join("")}${details.assignmentChanges?.length > cellChanges.length ? `<span class="audit-meta">+${details.assignmentChanges.length - cellChanges.length} more changed blocks</span>` : ""}</div>` : ""}
+            ${detailRows.length ? `<div class="audit-cell-changes">${detailRows.map(change => `<div class="audit-cell-change"><strong>${escapeHtml(change.name || "Change")}</strong><span>${escapeHtml(change.context || "")}</span><span>${escapeHtml(change.change || "Updated")}</span></div>`).join("")}</div>` : ""}
           </div>
           <span class="audit-revision">Revision ${Number(event.revision) || 0}</span>
         </article>`;
       }).join("");
-    }
-
-    function markAuditSeen() {
-      auditSeenId = Math.max(auditSeenId, auditLatestId);
-      try { localStorage.setItem(AUDIT_SEEN_KEY, String(auditSeenId)); } catch (error) { console.warn(error); }
-      renderAuditLog();
     }
 
     async function loadAuditLog({ notify = false } = {}) {
@@ -1866,7 +1899,6 @@
       auditLoading = true;
       auditErrorMessage = "";
       renderAuditLog();
-      const previousLatest = auditLatestId;
       try {
         const response = await fetch("/api/audit?limit=60", { headers: { "x-chief-token": chiefToken }, cache: "no-store" });
         if (response.status === 401) { expireChiefSession(); return; }
@@ -1874,21 +1906,58 @@
         const result = await response.json();
         auditEvents = Array.isArray(result.events) ? result.events : [];
         auditLatestId = Number(result.latestId) || Number(auditEvents[0]?.id) || 0;
-        const threshold = Math.max(previousLatest, auditSeenId);
-        const newCount = auditEvents.filter(event => Number(event.id) > threshold).length;
-        if (notify && newCount && !els.changeLogDialog.open) toast(`${newCount} new shared change${newCount === 1 ? "" : "s"} logged for chief review.`, "warn");
+        auditDismissedId = Number(result.dismissedThroughId) || 0;
+        auditPendingCount = Number(result.pendingCount) || auditEvents.filter(event => Number(event.id) > auditDismissedId).length;
+        const needsPrompt = notify && auditPendingCount > 0 && auditLatestId > auditDismissedId && auditLatestId > auditPromptedThroughId;
+        if (needsPrompt) {
+          auditPromptedThroughId = auditLatestId;
+          if (!els.changeLogDialog.open) els.changeLogDialog.showModal();
+          toast(`${auditPendingCount} new shared change${auditPendingCount === 1 ? " requires" : "s require"} chief review.`, "warn");
+        }
       } catch (error) {
         console.warn(error);
         auditErrorMessage = "The change log could not be refreshed. The schedule is still available.";
       } finally {
         auditLoading = false;
         renderAuditLog();
-        if (els.changeLogDialog.open) markAuditSeen();
+      }
+    }
+
+    async function dismissAuditNotification() {
+      if (!chiefSignedIn || !chiefToken || !auditPendingCount || auditDismissLoading) return;
+      auditDismissLoading = true;
+      renderAuditLog();
+      try {
+        const response = await fetch("/api/audit/dismiss", {
+          method: "PUT",
+          headers: { "content-type": "application/json", "x-chief-token": chiefToken },
+          body: JSON.stringify({ latestId: auditLatestId }),
+        });
+        if (response.status === 401) { expireChiefSession(); return; }
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || "Dismissal failed");
+        auditDismissedId = Number(result.dismissedThroughId) || auditDismissedId;
+        auditPromptedThroughId = Math.max(auditPromptedThroughId, auditDismissedId);
+        auditDismissLoading = false;
+        await loadAuditLog({ notify: true });
+        if (!auditPendingCount) {
+          if (els.changeLogDialog.open) els.changeLogDialog.close();
+          toast("Notification dismissed. Every change remains in the shared log.", "success");
+        } else {
+          toast("A newer change arrived and still requires review.", "warn");
+        }
+      } catch (error) {
+        console.warn(error);
+        toast("The notification could not be dismissed. Please try again.", "warn");
+      } finally {
+        auditDismissLoading = false;
+        renderAuditLog();
       }
     }
 
     function startAuditPolling() {
       if (auditPollTimer) clearInterval(auditPollTimer);
+      auditPromptedThroughId = 0;
       loadAuditLog({ notify: true });
       auditPollTimer = setInterval(() => loadAuditLog({ notify: true }), 20000);
     }
@@ -1949,7 +2018,6 @@
       if (!els.changeLogDialog.open) els.changeLogDialog.showModal();
       renderAuditLog();
       await loadAuditLog();
-      markAuditSeen();
     }
 
     function auditMetadata() {
@@ -3631,7 +3699,8 @@
     els.account.addEventListener("click", openResidentDialog);
     els.chiefAccess.addEventListener("click", () => chiefSignedIn ? signOutChief() : openChiefDialog("actual"));
     els.changeLog.addEventListener("click", openChangeLog);
-    els.refreshChangeLog.addEventListener("click", async () => { await loadAuditLog(); markAuditSeen(); });
+    els.refreshChangeLog.addEventListener("click", () => loadAuditLog());
+    els.dismissChangeLog.addEventListener("click", dismissAuditNotification);
     els.changeChiefPassword.addEventListener("click", openChangeChiefPasswordDialog);
     els.manageResidents.addEventListener("click", openResidentManager);
     els.compareResidents.addEventListener("click", openResidentComparison);

@@ -134,7 +134,43 @@ const describeChange = (before, after) => {
   const requestedFundamentals = changedSet(before, after, 'requestedFundamentalCells');
   const actualFundamentals = changedSet(before, after, 'actualFundamentalCells');
   const fundamentalsChanged = requestedFundamentals.added.length + requestedFundamentals.removed.length + actualFundamentals.added.length + actualFundamentals.removed.length;
-  const requestMetadataChanged = changedObjectKeys(before?.requestMeta, after?.requestMeta).length;
+  const requestMetadataIds = changedObjectKeys(before?.requestMeta, after?.requestMeta);
+  const requestedPeopleBefore = new Map(list(before?.requestedResidents).filter(person => person?.id).map(person => [String(person.id), person]));
+  const requestedPeopleAfter = new Map(list(after?.requestedResidents).filter(person => person?.id).map(person => [String(person.id), person]));
+  const requestSubmissions = requestMetadataIds.map(id => {
+    const previous = before?.requestMeta?.[id];
+    const next = after?.requestMeta?.[id];
+    const person = requestedPeopleAfter.get(id) || requestedPeopleBefore.get(id);
+    return {
+      residentId: id,
+      residentName: cleanText(person?.name, 'Resident'),
+      level: cleanText(person?.level, '', 8),
+      action: !previous && next ? 'Request submitted' : previous && !next ? 'Request record removed' : 'Request saved again',
+    };
+  }).slice(0, 40);
+  const fundamentalChangeDetails = (changes, schedule) => {
+    const beforePeople = new Map(list(before?.[`${schedule}Residents`]).filter(person => person?.id).map(person => [String(person.id), person]));
+    const afterPeople = new Map(list(after?.[`${schedule}Residents`]).filter(person => person?.id).map(person => [String(person.id), person]));
+    return [
+      ...changes.added.map(cell => ({ cell, action: 'Made fundamental' })),
+      ...changes.removed.map(cell => ({ cell, action: 'Made editable' })),
+    ].map(change => {
+      const separator = String(change.cell).lastIndexOf(':');
+      const residentId = separator >= 0 ? String(change.cell).slice(0, separator) : String(change.cell);
+      const blockIndex = separator >= 0 ? Number(String(change.cell).slice(separator + 1)) : -1;
+      const person = afterPeople.get(residentId) || beforePeople.get(residentId);
+      return {
+        schedule,
+        action: change.action,
+        residentId,
+        residentName: cleanText(person?.name, 'Resident'),
+        level: cleanText(person?.level, '', 8),
+        block: Number.isInteger(blockIndex) && blockIndex >= 0 ? blockIndex + 1 : null,
+        rotation: list(person?.assignments)[blockIndex] || null,
+      };
+    });
+  };
+  const requestMetadataChanged = requestMetadataIds.length;
   const details = {
     requestedAssignmentsChanged: requested.count,
     actualAssignmentsChanged: actual.count,
@@ -145,16 +181,25 @@ const describeChange = (before, after) => {
     residentLevelsChanged: levelsChanged.slice(0, 40),
     requestedFundamentals,
     actualFundamentals,
+    fundamentalChanges: [...fundamentalChangeDetails(requestedFundamentals, 'requested'), ...fundamentalChangeDetails(actualFundamentals, 'actual')].slice(0, 100),
     requestMetadataChanged,
+    requestSubmissions,
     themeChanged: Boolean(before && before.theme !== after?.theme),
+    themeChange: before && before.theme !== after?.theme ? { from: cleanText(before.theme, 'day', 20), to: cleanText(after?.theme, 'day', 20) } : null,
   };
   const parts = [];
-  if (requested.count) parts.push(`${requested.count} requested rotation${requested.count === 1 ? '' : 's'}`);
-  if (actual.count) parts.push(`${actual.count} final rotation${actual.count === 1 ? '' : 's'}`);
+  if (requested.count === 1) {
+    const change = requested.changes[0];
+    parts.push(`requested Block ${change.block} for ${change.residentName}: ${change.from || 'Open'} to ${change.to || 'Open'}`);
+  } else if (requested.count) parts.push(`${requested.count} requested rotations`);
+  if (actual.count === 1) {
+    const change = actual.changes[0];
+    parts.push(`final Block ${change.block} for ${change.residentName}: ${change.from || 'Open'} to ${change.to || 'Open'}`);
+  } else if (actual.count) parts.push(`${actual.count} final rotations`);
   const residentChanges = added.length + removed.length + renamed.length + levelsChanged.length;
   if (residentChanges) parts.push(`${residentChanges} resident profile change${residentChanges === 1 ? '' : 's'}`);
   if (fundamentalsChanged) parts.push(`${fundamentalsChanged} fundamental setting${fundamentalsChanged === 1 ? '' : 's'}`);
-  if (requestMetadataChanged && !requested.count) parts.push(`${requestMetadataChanged} request submission${requestMetadataChanged === 1 ? '' : 's'}`);
+  if (requestMetadataChanged && !requested.count) parts.push(requestMetadataChanged === 1 ? 'a request record without changing any rotation' : `${requestMetadataChanged} request records without rotation changes`);
   if (details.themeChanged) parts.push('the shared theme');
   return { details, parts };
 };
@@ -284,7 +329,15 @@ const server = http.createServer(async (req, res) => {
           return json(res, 200, { ok: true, noop: true, state: previousState, revision: currentRevision, savedAt: row?.updated_at || null });
         }
         const area = auditArea(audit, change.details);
-        const verb = change.parts.length ? `changed ${change.parts.join(', ')}` : `saved the ${area === 'actual' ? 'final' : area === 'requested' ? 'requested' : 'shared'} schedule without changing a value`;
+        const requestRecordOnly = Boolean(change.details.requestMetadataChanged)
+          && !change.details.requestedAssignmentsChanged
+          && !change.details.actualAssignmentsChanged
+          && change.parts.length === 1;
+        const verb = requestRecordOnly
+          ? 'saved a request update without changing any rotation'
+          : change.parts.length
+            ? `changed ${change.parts.join(', ')}`
+            : `saved the ${area === 'actual' ? 'final' : area === 'requested' ? 'requested' : 'shared'} schedule without changing a value`;
         const saved = await client.query("INSERT INTO app_state(key,value,revision) VALUES('schedule',$1,$2) ON CONFLICT(key) DO UPDATE SET value=$1, revision=$2, updated_at=now() RETURNING updated_at", [mergedState, nextRevision]);
         await insertAudit(client, { revision: nextRevision, ...identity, area, summary: `${identity.actorName} ${verb}.`, details: change.details });
         await client.query('COMMIT');
@@ -299,9 +352,38 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/audit' && req.method === 'GET') {
       if (!chief(req)) return json(res, 401, { error: 'Chief access required.' });
       const limit = Math.min(100, Math.max(1, Math.floor(Number(requestUrl.searchParams.get('limit')) || 50)));
-      const result = await pool.query('SELECT id,revision,occurred_at,actor_type,actor_id,actor_name,area,summary,details FROM schedule_audit ORDER BY id DESC LIMIT $1', [limit]);
+      const [result, dismissed] = await Promise.all([
+        pool.query('SELECT id,revision,occurred_at,actor_type,actor_id,actor_name,area,summary,details FROM schedule_audit ORDER BY id DESC LIMIT $1', [limit]),
+        pool.query("SELECT value FROM app_state WHERE key='audit_dismissed'"),
+      ]);
       const events = result.rows.map(row => ({ id: Number(row.id), revision: Number(row.revision), occurredAt: row.occurred_at, actorType: row.actor_type, actorId: row.actor_id, actorName: row.actor_name, area: row.area, summary: row.summary, details: row.details || {} }));
-      return json(res, 200, { events, latestId: events[0]?.id || 0 });
+      const dismissedThroughId = Number(dismissed.rows[0]?.value?.latestId) || 0;
+      const pending = await pool.query('SELECT COUNT(*) AS pending_count FROM schedule_audit WHERE id > $1', [dismissedThroughId]);
+      const pendingCount = Number(pending.rows[0]?.pending_count) || 0;
+      return json(res, 200, { events, latestId: events[0]?.id || 0, dismissedThroughId, pendingCount });
+    }
+    if (pathname === '/api/audit/dismiss' && req.method === 'PUT') {
+      if (!chief(req)) return json(res, 401, { error: 'Chief access required.' });
+      const requestedId = Math.floor(Number((await readBody(req)).latestId));
+      if (!Number.isInteger(requestedId) || requestedId < 1) return json(res, 400, { error: 'A valid latest change is required.' });
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        await client.query("SELECT pg_advisory_xact_lock(hashtext('jhah-audit-dismiss'))");
+        const latest = await client.query('SELECT COALESCE(MAX(id),0) AS latest_id FROM schedule_audit');
+        const current = await client.query("SELECT value FROM app_state WHERE key='audit_dismissed' FOR UPDATE");
+        const latestId = Number(latest.rows[0]?.latest_id) || 0;
+        const currentId = Number(current.rows[0]?.value?.latestId) || 0;
+        const dismissedThroughId = Math.max(currentId, Math.min(requestedId, latestId));
+        await client.query("INSERT INTO app_state(key,value) VALUES('audit_dismissed',$1) ON CONFLICT(key) DO UPDATE SET value=$1, updated_at=now()", [{ latestId: dismissedThroughId, dismissedAt: new Date().toISOString() }]);
+        await client.query('COMMIT');
+        return json(res, 200, { ok: true, dismissedThroughId });
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
     }
     if (pathname === '/api/chief/login' && req.method === 'POST') { const { password } = await readBody(req); const saved = await pool.query("SELECT value FROM app_state WHERE key='chief_password'"); const current = saved.rowCount ? saved.rows[0].value.password : process.env.CHIEF_PASSWORD; if (!current || !secret || ![current, process.env.MASTER_KEY].includes(password)) return json(res, 401, { error: 'Incorrect password.' }); return json(res, 200, { token: tokenFor(req) }); }
     if (pathname === '/api/chief/session' && req.method === 'GET') {
