@@ -281,7 +281,9 @@ const insertAudit = async (client, { revision, actorType, actorId, actorName, ar
 async function init() {
   await pool.query('CREATE TABLE IF NOT EXISTS app_state (key text PRIMARY KEY, value jsonb NOT NULL, updated_at timestamptz NOT NULL DEFAULT now(), revision bigint NOT NULL DEFAULT 0)');
   await pool.query('ALTER TABLE app_state ADD COLUMN IF NOT EXISTS revision bigint NOT NULL DEFAULT 0');
-  await pool.query("CREATE TABLE IF NOT EXISTS schedule_audit (id bigserial PRIMARY KEY, revision bigint NOT NULL DEFAULT 0, occurred_at timestamptz NOT NULL DEFAULT now(), actor_type text NOT NULL, actor_id text, actor_name text NOT NULL, area text NOT NULL, summary text NOT NULL, details jsonb NOT NULL DEFAULT '{}'::jsonb)");
+  await pool.query("CREATE TABLE IF NOT EXISTS schedule_audit (id bigserial PRIMARY KEY, revision bigint NOT NULL DEFAULT 0, occurred_at timestamptz NOT NULL DEFAULT now(), actor_type text NOT NULL, actor_id text, actor_name text NOT NULL, area text NOT NULL, summary text NOT NULL, details jsonb NOT NULL DEFAULT '{}'::jsonb, deleted_at timestamptz, deleted_by text)");
+  await pool.query('ALTER TABLE schedule_audit ADD COLUMN IF NOT EXISTS deleted_at timestamptz');
+  await pool.query('ALTER TABLE schedule_audit ADD COLUMN IF NOT EXISTS deleted_by text');
   await pool.query('CREATE INDEX IF NOT EXISTS schedule_audit_occurred_idx ON schedule_audit (occurred_at DESC)');
 }
 const server = http.createServer(async (req, res) => {
@@ -353,12 +355,12 @@ const server = http.createServer(async (req, res) => {
       if (!chief(req)) return json(res, 401, { error: 'Chief access required.' });
       const limit = Math.min(100, Math.max(1, Math.floor(Number(requestUrl.searchParams.get('limit')) || 50)));
       const [result, dismissed] = await Promise.all([
-        pool.query('SELECT id,revision,occurred_at,actor_type,actor_id,actor_name,area,summary,details FROM schedule_audit ORDER BY id DESC LIMIT $1', [limit]),
+        pool.query('SELECT id,revision,occurred_at,actor_type,actor_id,actor_name,area,summary,details FROM schedule_audit WHERE deleted_at IS NULL ORDER BY id DESC LIMIT $1', [limit]),
         pool.query("SELECT value FROM app_state WHERE key='audit_dismissed'"),
       ]);
       const events = result.rows.map(row => ({ id: Number(row.id), revision: Number(row.revision), occurredAt: row.occurred_at, actorType: row.actor_type, actorId: row.actor_id, actorName: row.actor_name, area: row.area, summary: row.summary, details: row.details || {} }));
       const dismissedThroughId = Number(dismissed.rows[0]?.value?.latestId) || 0;
-      const pending = await pool.query('SELECT COUNT(*) AS pending_count FROM schedule_audit WHERE id > $1', [dismissedThroughId]);
+      const pending = await pool.query('SELECT COUNT(*) AS pending_count FROM schedule_audit WHERE deleted_at IS NULL AND id > $1', [dismissedThroughId]);
       const pendingCount = Number(pending.rows[0]?.pending_count) || 0;
       return json(res, 200, { events, latestId: events[0]?.id || 0, dismissedThroughId, pendingCount });
     }
@@ -370,7 +372,7 @@ const server = http.createServer(async (req, res) => {
       try {
         await client.query('BEGIN');
         await client.query("SELECT pg_advisory_xact_lock(hashtext('jhah-audit-dismiss'))");
-        const latest = await client.query('SELECT COALESCE(MAX(id),0) AS latest_id FROM schedule_audit');
+        const latest = await client.query('SELECT COALESCE(MAX(id),0) AS latest_id FROM schedule_audit WHERE deleted_at IS NULL');
         const current = await client.query("SELECT value FROM app_state WHERE key='audit_dismissed' FOR UPDATE");
         const latestId = Number(latest.rows[0]?.latest_id) || 0;
         const currentId = Number(current.rows[0]?.value?.latestId) || 0;
@@ -384,6 +386,15 @@ const server = http.createServer(async (req, res) => {
       } finally {
         client.release();
       }
+    }
+    const auditEntryMatch = pathname.match(/^\/api\/audit\/(\d+)$/);
+    if (auditEntryMatch && req.method === 'DELETE') {
+      if (!chief(req)) return json(res, 401, { error: 'Chief access required.' });
+      const auditId = Number(auditEntryMatch[1]);
+      if (!Number.isSafeInteger(auditId) || auditId < 1) return json(res, 400, { error: 'Invalid change-log entry.' });
+      const removed = await pool.query("UPDATE schedule_audit SET deleted_at=now(), deleted_by='Chief' WHERE id=$1 AND deleted_at IS NULL RETURNING id", [auditId]);
+      if (!removed.rowCount) return json(res, 404, { error: 'That change-log entry is already deleted or does not exist.' });
+      return json(res, 200, { ok: true, deletedId: auditId });
     }
     if (pathname === '/api/chief/login' && req.method === 'POST') { const { password } = await readBody(req); const saved = await pool.query("SELECT value FROM app_state WHERE key='chief_password'"); const current = saved.rowCount ? saved.rows[0].value.password : process.env.CHIEF_PASSWORD; if (!current || !secret || ![current, process.env.MASTER_KEY].includes(password)) return json(res, 401, { error: 'Incorrect password.' }); return json(res, 200, { token: tokenFor(req) }); }
     if (pathname === '/api/chief/session' && req.method === 'GET') {

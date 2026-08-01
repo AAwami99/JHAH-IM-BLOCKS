@@ -617,7 +617,9 @@
     .audit-cell-changes { display: grid; gap: 4px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); }
     .audit-cell-change { display: grid; grid-template-columns: minmax(120px, .8fr) 130px minmax(0, 1.3fr); gap: 9px; padding: 3px 0; color: var(--muted); font-size: 9px; }
     .audit-cell-change strong { overflow: hidden; color: var(--ink); text-overflow: ellipsis; white-space: nowrap; }
+    .audit-event-actions { display: grid; justify-items: end; align-content: start; gap: 7px; }
     .audit-revision { min-width: 54px; color: var(--muted); font-size: 8px; text-align: right; }
+    .audit-delete-entry { min-height: 27px; padding: 4px 7px; font-size: 8px; }
     .chief-entry {
       display: grid;
       grid-template-columns: 34px 1fr auto;
@@ -878,7 +880,8 @@
       .audit-status { align-items: flex-start; }
       .audit-event { grid-template-columns: 34px minmax(0, 1fr); padding: 10px; }
       .audit-avatar { width: 34px; height: 34px; }
-      .audit-revision { grid-column: 2; text-align: left; }
+      .audit-event-actions { grid-column: 2; grid-template-columns: 1fr auto; align-items: center; justify-items: start; }
+      .audit-revision { text-align: left; }
       .audit-cell-change { grid-template-columns: 1fr; gap: 2px; }
       .resident-list { grid-template-columns: 1fr; max-height: none; }
       .resident-manager-add, .resident-manager-row { grid-template-columns: 1fr; }
@@ -1297,7 +1300,7 @@
       <div class="audit-status">
         <div class="audit-status-copy">
           <strong id="changeLogStatus">Checking the shared server…</strong>
-          <span>Alerts remain active until Dismiss notification is pressed. Every entry stays in this history.</span>
+          <span>Dismiss keeps the history. Delete entry removes only the selected log item, never schedule data.</span>
         </div>
         <span class="audit-live">Live</span>
       </div>
@@ -1491,6 +1494,7 @@
     let auditPollTimer = null;
     let auditLoading = false;
     let auditDismissLoading = false;
+    let auditDeleteLoadingId = 0;
     let auditErrorMessage = "";
 
     const els = {
@@ -1889,7 +1893,10 @@
             ${facts.length ? `<div class="audit-facts">${facts.map(fact => `<span class="audit-fact">${escapeHtml(fact)}</span>`).join("")}</div>` : ""}
             ${detailRows.length ? `<div class="audit-cell-changes">${detailRows.map(change => `<div class="audit-cell-change"><strong>${escapeHtml(change.name || "Change")}</strong><span>${escapeHtml(change.context || "")}</span><span>${escapeHtml(change.change || "Updated")}</span></div>`).join("")}</div>` : ""}
           </div>
-          <span class="audit-revision">Revision ${Number(event.revision) || 0}</span>
+          <div class="audit-event-actions">
+            <span class="audit-revision">Revision ${Number(event.revision) || 0}</span>
+            <button class="button danger audit-delete-entry" type="button" data-delete-audit-id="${Number(event.id) || 0}" ${auditDeleteLoadingId === Number(event.id) ? "disabled" : ""}>${auditDeleteLoadingId === Number(event.id) ? "Deleting…" : "Delete entry"}</button>
+          </div>
         </article>`;
       }).join("");
     }
@@ -1951,6 +1958,34 @@
         toast("The notification could not be dismissed. Please try again.", "warn");
       } finally {
         auditDismissLoading = false;
+        renderAuditLog();
+      }
+    }
+
+    async function deleteAuditEntry(auditId) {
+      const id = Number(auditId);
+      const event = auditEvents.find(item => Number(item.id) === id);
+      if (!chiefSignedIn || !chiefToken || !event || auditDeleteLoadingId) return;
+      if (!confirm(`Delete this change-log entry?\n\n${auditDisplaySummary(event, event.details || {})}\n\nThis removes only the selected notification. It does not change the schedule.`)) return;
+      auditDeleteLoadingId = id;
+      renderAuditLog();
+      try {
+        const response = await fetch(`/api/audit/${id}`, { method: "DELETE", headers: { "x-chief-token": chiefToken } });
+        if (response.status === 401) { expireChiefSession(); return; }
+        const result = await response.json().catch(() => ({}));
+        if (response.status === 404) {
+          await loadAuditLog();
+          toast("That notification was already deleted by another chief.", "warn");
+          return;
+        }
+        if (!response.ok) throw new Error(result.error || "Delete failed");
+        await loadAuditLog();
+        toast("Selected notification deleted. Schedule data was not changed.", "success");
+      } catch (error) {
+        console.warn(error);
+        toast("The selected notification could not be deleted. Please try again.", "warn");
+      } finally {
+        auditDeleteLoadingId = 0;
         renderAuditLog();
       }
     }
@@ -3701,6 +3736,10 @@
     els.changeLog.addEventListener("click", openChangeLog);
     els.refreshChangeLog.addEventListener("click", () => loadAuditLog());
     els.dismissChangeLog.addEventListener("click", dismissAuditNotification);
+    els.changeLogList.addEventListener("click", event => {
+      const button = event.target.closest("[data-delete-audit-id]");
+      if (button) deleteAuditEntry(button.dataset.deleteAuditId);
+    });
     els.changeChiefPassword.addEventListener("click", openChangeChiefPasswordDialog);
     els.manageResidents.addEventListener("click", openResidentManager);
     els.compareResidents.addEventListener("click", openResidentComparison);
