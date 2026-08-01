@@ -163,6 +163,24 @@
     .account-button { max-width: 190px; overflow: hidden; text-overflow: ellipsis; }
     .chief-access-button { border-color: var(--nav); background: var(--nav); color: var(--nav-ink); }
     .chief-access-button:hover { border-color: var(--accent); background: var(--accent-strong); color: #fff; }
+    .change-log-button { position: relative; border-color: var(--accent); background: var(--accent-soft); color: var(--accent-strong); }
+    .change-log-button:hover { background: var(--accent); color: #fff; }
+    .change-log-badge {
+      display: inline-grid;
+      place-items: center;
+      min-width: 19px;
+      height: 19px;
+      padding: 0 5px;
+      border-radius: 999px;
+      background: var(--danger);
+      color: #fff;
+      font-size: 9px;
+      font-weight: 850;
+      line-height: 1;
+      box-shadow: 0 0 0 2px var(--paper);
+    }
+    .change-log-button.has-new { animation: audit-pulse 1.8s ease-in-out 2; }
+    @keyframes audit-pulse { 50% { box-shadow: 0 0 0 5px var(--accent-soft); } }
 
     .view-tabs {
       display: flex;
@@ -558,6 +576,48 @@
     .dialog-body { flex: 1; min-height: 0; padding: 15px 18px; overflow: auto; }
     .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--line); background: var(--paper-2); }
     .dialog-filter { display: grid; grid-template-columns: 1fr 130px; gap: 8px; margin-bottom: 12px; }
+    #changeLogDialog { width: min(780px, calc(100vw - 30px)); }
+    .audit-status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--accent-soft);
+    }
+    .audit-status-copy strong, .audit-status-copy span { display: block; }
+    .audit-status-copy strong { font-size: 11px; }
+    .audit-status-copy span { margin-top: 2px; color: var(--muted); font-size: 9px; }
+    .audit-live { display: inline-flex; align-items: center; gap: 6px; color: var(--accent-strong); font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; }
+    .audit-live::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--success); box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 16%, transparent); }
+    .audit-log-list { display: grid; gap: 9px; }
+    .audit-empty { padding: 44px 18px; border: 1px dashed var(--line-strong); border-radius: 8px; color: var(--muted); text-align: center; }
+    .audit-event {
+      display: grid;
+      grid-template-columns: 38px minmax(0, 1fr) auto;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--accent);
+      border-radius: 8px;
+      background: var(--paper);
+    }
+    .audit-event.is-unseen { background: linear-gradient(90deg, var(--accent-soft), var(--paper) 44%); border-color: var(--accent); }
+    .audit-avatar { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 8px; background: var(--nav); color: var(--nav-ink); font-size: 10px; font-weight: 850; letter-spacing: .05em; }
+    .audit-avatar.is-resident { background: var(--accent-soft); color: var(--accent-strong); border: 1px solid var(--accent); }
+    .audit-main { min-width: 0; }
+    .audit-summary { margin: 0; font-size: 12px; font-weight: 730; line-height: 1.45; }
+    .audit-meta { display: flex; flex-wrap: wrap; gap: 5px 9px; margin-top: 3px; color: var(--muted); font-size: 9px; }
+    .audit-area { padding: 2px 5px; border-radius: 999px; background: var(--paper-2); color: var(--accent-strong); font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; }
+    .audit-facts { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+    .audit-fact { padding: 3px 6px; border: 1px solid var(--line); border-radius: 999px; background: var(--paper-2); color: var(--muted); font-size: 8px; font-weight: 700; }
+    .audit-cell-changes { display: grid; gap: 4px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); }
+    .audit-cell-change { display: grid; grid-template-columns: minmax(100px, .8fr) 58px minmax(0, 1.3fr); gap: 7px; color: var(--muted); font-size: 9px; }
+    .audit-cell-change strong { overflow: hidden; color: var(--ink); text-overflow: ellipsis; white-space: nowrap; }
+    .audit-revision { min-width: 54px; color: var(--muted); font-size: 8px; text-align: right; }
     .chief-entry {
       display: grid;
       grid-template-columns: 34px 1fr auto;
@@ -752,7 +812,7 @@
       .cycle-brief strong { font-size: 15px; }
       .cycle-brief small { text-align: right; }
       .mast-actions { width: 100%; grid-template-columns: 1fr 1fr; }
-      .theme-control, .theme-select, .account-button, .chief-access-button { width: 100%; max-width: none; }
+      .theme-control, .theme-select, .account-button, .chief-access-button, .change-log-button { width: 100%; max-width: none; }
       .chief-access-button { grid-column: 1 / -1; }
       .view-tabs { padding: 0 4px; overflow-x: auto; border-radius: 0; scrollbar-width: none; }
       .view-tab { min-width: max-content; min-height: 44px; padding: 0 13px; font-size: 12px; }
@@ -815,6 +875,11 @@
       .dialog-body { padding: 11px; }
       .dialog-actions { position: sticky; bottom: 0; padding: 10px 11px; }
       .dialog-filter { grid-template-columns: 1fr 105px; }
+      .audit-status { align-items: flex-start; }
+      .audit-event { grid-template-columns: 34px minmax(0, 1fr); padding: 10px; }
+      .audit-avatar { width: 34px; height: 34px; }
+      .audit-revision { grid-column: 2; text-align: left; }
+      .audit-cell-change { grid-template-columns: 1fr; gap: 2px; }
       .resident-list { grid-template-columns: 1fr; max-height: none; }
       .resident-manager-add, .resident-manager-row { grid-template-columns: 1fr; }
       .fundamental-manager-controls { grid-template-columns: 1fr; }
@@ -877,6 +942,9 @@
           </label>
           <button id="accountBtn" class="button account-button" type="button">Resident sign in</button>
           <button id="chiefAccessBtn" class="button chief-access-button" type="button">Chief access</button>
+          <button id="changeLogBtn" class="button change-log-button" type="button" aria-label="Open the chief change log" hidden>
+            Last changes <span id="changeLogBadge" class="change-log-badge" hidden>0</span>
+          </button>
           <button id="changeChiefPasswordBtn" class="button" type="button" hidden>Change password</button>
         </div>
       </div>
@@ -1220,6 +1288,27 @@
     </div>
   </dialog>
 
+  <dialog id="changeLogDialog" aria-labelledby="changeLogTitle">
+    <div class="dialog-head">
+      <h3 id="changeLogTitle">Shared change log</h3>
+      <p>Chief-only history of successful schedule saves. Newest activity appears first and updates across devices.</p>
+    </div>
+    <div class="dialog-body">
+      <div class="audit-status">
+        <div class="audit-status-copy">
+          <strong id="changeLogStatus">Checking the shared server…</strong>
+          <span>Only successful saves are recorded; conflicting attempts are never added.</span>
+        </div>
+        <span class="audit-live">Live</span>
+      </div>
+      <div id="changeLogList" class="audit-log-list" aria-live="polite"></div>
+    </div>
+    <div class="dialog-actions">
+      <button id="refreshChangeLogBtn" class="button" type="button">Refresh</button>
+      <button class="button primary" type="button" data-close-dialog="changeLogDialog">Done</button>
+    </div>
+  </dialog>
+
   <div id="toastRegion" class="toast-region" aria-live="polite" aria-atomic="true"></div>
   <div id="summaryHoverCard" class="summary-hover-card" hidden></div>
 
@@ -1332,6 +1421,7 @@
 
     const STORAGE_KEY = "jhah-resident-block-distribution-2027-v2";
     const LEGACY_KEY = "jhah-resident-block-distribution-2027-v1";
+    const AUDIT_SEEN_KEY = "jhah-chief-audit-seen-2027";
     const BASELINE_FUNDAMENTAL_CELLS = new Set();
     BASELINE.forEach(person => person.assignments.forEach((value, index) => {
       if (value) BASELINE_FUNDAMENTAL_CELLS.add(`${person.id}:${index}`);
@@ -1389,12 +1479,23 @@
     let allComparisonExpanded = false;
     let undoStack = [];
     let redoStack = [];
+    let auditEvents = [];
+    let auditLatestId = 0;
+    let auditPollTimer = null;
+    let auditLoading = false;
+    let auditErrorMessage = "";
+    let auditSeenId = (() => {
+      try { return Number(localStorage.getItem(AUDIT_SEEN_KEY)) || 0; }
+      catch { return 0; }
+    })();
 
     const els = {
       theme: document.getElementById("themeSelect"),
       saveState: document.getElementById("saveState"),
       account: document.getElementById("accountBtn"),
       chiefAccess: document.getElementById("chiefAccessBtn"),
+      changeLog: document.getElementById("changeLogBtn"),
+      changeLogBadge: document.getElementById("changeLogBadge"),
       changeChiefPassword: document.getElementById("changeChiefPasswordBtn"),
       roleState: document.getElementById("roleState"),
       headerResidentCount: document.getElementById("headerResidentCount"),
@@ -1470,6 +1571,10 @@
       newChiefPassword: document.getElementById("newChiefPassword"),
       confirmChiefPassword: document.getElementById("confirmChiefPassword"),
       changeChiefPasswordError: document.getElementById("changeChiefPasswordError"),
+      changeLogDialog: document.getElementById("changeLogDialog"),
+      changeLogStatus: document.getElementById("changeLogStatus"),
+      changeLogList: document.getElementById("changeLogList"),
+      refreshChangeLog: document.getElementById("refreshChangeLogBtn"),
       manageResidents: document.getElementById("manageResidentsBtn"),
       residentManagerDialog: document.getElementById("residentManagerDialog"),
       residentManagerList: document.getElementById("residentManagerList"),
@@ -1691,6 +1796,131 @@
       return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(date);
     }
 
+    function auditAreaLabel(value) {
+      return ({ requested: "Requested", actual: "Final schedule", residents: "Residents", fundamentals: "Fundamentals", settings: "Settings", schedule: "Shared schedule" })[value] || "Shared schedule";
+    }
+
+    function auditFacts(details = {}) {
+      const facts = [];
+      const residentChanges = (details.residentsAdded?.length || 0) + (details.residentsRemoved?.length || 0) + (details.residentsRenamed?.length || 0) + (details.residentLevelsChanged?.length || 0);
+      const fundamentalChanges = (details.requestedFundamentals?.added?.length || 0) + (details.requestedFundamentals?.removed?.length || 0) + (details.actualFundamentals?.added?.length || 0) + (details.actualFundamentals?.removed?.length || 0);
+      if (details.requestedAssignmentsChanged) facts.push(`${details.requestedAssignmentsChanged} requested block${details.requestedAssignmentsChanged === 1 ? "" : "s"}`);
+      if (details.actualAssignmentsChanged) facts.push(`${details.actualAssignmentsChanged} final block${details.actualAssignmentsChanged === 1 ? "" : "s"}`);
+      if (residentChanges) facts.push(`${residentChanges} resident update${residentChanges === 1 ? "" : "s"}`);
+      if (fundamentalChanges) facts.push(`${fundamentalChanges} fundamental update${fundamentalChanges === 1 ? "" : "s"}`);
+      if (details.requestMetadataChanged && !details.requestedAssignmentsChanged) facts.push(`${details.requestMetadataChanged} request submission${details.requestMetadataChanged === 1 ? "" : "s"}`);
+      if (details.themeChanged) facts.push("Theme updated");
+      if (details.baselineRestored) facts.push("Baseline restored");
+      return facts;
+    }
+
+    function renderAuditLog() {
+      const unseen = auditEvents.filter(event => Number(event.id) > auditSeenId).length;
+      els.changeLog.hidden = !chiefSignedIn;
+      els.changeLogBadge.hidden = !unseen;
+      els.changeLogBadge.textContent = unseen > 99 ? "99+" : String(unseen);
+      els.changeLog.classList.toggle("has-new", unseen > 0);
+      els.changeLog.setAttribute("aria-label", unseen ? `Open the chief change log. ${unseen} unseen change${unseen === 1 ? "" : "s"}.` : "Open the chief change log");
+      els.changeLog.title = auditEvents[0]?.summary || "Review successful shared saves";
+      if (!auditEvents.length) {
+        els.changeLogStatus.textContent = auditLoading ? "Checking the shared server…" : auditErrorMessage || "No changes have been logged yet.";
+        els.changeLogList.innerHTML = `<div class="audit-empty">${escapeHtml(auditErrorMessage || "The first successful shared save will appear here automatically.")}</div>`;
+        return;
+      }
+      els.changeLogStatus.textContent = auditErrorMessage || `${auditEvents.length} latest change${auditEvents.length === 1 ? "" : "s"} · Last update ${formatTimestamp(auditEvents[0].occurredAt)}`;
+      els.changeLogList.innerHTML = auditEvents.map(event => {
+        const details = event.details || {};
+        const facts = auditFacts(details);
+        const cellChanges = Array.isArray(details.assignmentChanges) ? details.assignmentChanges.slice(0, 5) : [];
+        const profileChanges = [
+          ...(details.residentsAdded || []).map(person => ({ name: person.name, context: person.level, change: "Resident added" })),
+          ...(details.residentsRemoved || []).map(person => ({ name: person.name, context: person.level, change: "Resident removed" })),
+          ...(details.residentsRenamed || []).map(person => ({ name: person.to, context: "Renamed", change: `${person.from} → ${person.to}` })),
+          ...(details.residentLevelsChanged || []).map(person => ({ name: person.name, context: "Year", change: `${person.from} → ${person.to}` })),
+        ].slice(0, 5);
+        return `<article class="audit-event ${Number(event.id) > auditSeenId ? "is-unseen" : ""}">
+          <div class="audit-avatar ${event.actorType === "resident" ? "is-resident" : ""}" aria-hidden="true">${event.actorType === "chief" ? "CH" : event.actorType === "resident" ? "R" : "SH"}</div>
+          <div class="audit-main">
+            <p class="audit-summary">${escapeHtml(event.summary)}</p>
+            <div class="audit-meta"><span>${escapeHtml(formatTimestamp(event.occurredAt))}</span><span class="audit-area">${escapeHtml(auditAreaLabel(event.area))}</span></div>
+            ${facts.length ? `<div class="audit-facts">${facts.map(fact => `<span class="audit-fact">${escapeHtml(fact)}</span>`).join("")}</div>` : ""}
+            ${cellChanges.length || profileChanges.length ? `<div class="audit-cell-changes">${cellChanges.map(change => `<div class="audit-cell-change"><strong>${escapeHtml(change.residentName || "Resident")} · ${escapeHtml(change.level || "")}</strong><span>Block ${Number(change.block) || ""}</span><span>${escapeHtml(change.from || "Open")} → ${escapeHtml(change.to || "Open")}</span></div>`).join("")}${profileChanges.map(change => `<div class="audit-cell-change"><strong>${escapeHtml(change.name || "Resident")}</strong><span>${escapeHtml(change.context || "")}</span><span>${escapeHtml(change.change)}</span></div>`).join("")}${details.assignmentChanges?.length > cellChanges.length ? `<span class="audit-meta">+${details.assignmentChanges.length - cellChanges.length} more changed blocks</span>` : ""}</div>` : ""}
+          </div>
+          <span class="audit-revision">Revision ${Number(event.revision) || 0}</span>
+        </article>`;
+      }).join("");
+    }
+
+    function markAuditSeen() {
+      auditSeenId = Math.max(auditSeenId, auditLatestId);
+      try { localStorage.setItem(AUDIT_SEEN_KEY, String(auditSeenId)); } catch (error) { console.warn(error); }
+      renderAuditLog();
+    }
+
+    async function loadAuditLog({ notify = false } = {}) {
+      if (!chiefSignedIn || !chiefToken || auditLoading) return;
+      auditLoading = true;
+      auditErrorMessage = "";
+      renderAuditLog();
+      const previousLatest = auditLatestId;
+      try {
+        const response = await fetch("/api/audit?limit=60", { headers: { "x-chief-token": chiefToken }, cache: "no-store" });
+        if (response.status === 401) { expireChiefSession(); return; }
+        if (!response.ok) throw new Error("Change log unavailable");
+        const result = await response.json();
+        auditEvents = Array.isArray(result.events) ? result.events : [];
+        auditLatestId = Number(result.latestId) || Number(auditEvents[0]?.id) || 0;
+        const threshold = Math.max(previousLatest, auditSeenId);
+        const newCount = auditEvents.filter(event => Number(event.id) > threshold).length;
+        if (notify && newCount && !els.changeLogDialog.open) toast(`${newCount} new shared change${newCount === 1 ? "" : "s"} logged for chief review.`, "warn");
+      } catch (error) {
+        console.warn(error);
+        auditErrorMessage = "The change log could not be refreshed. The schedule is still available.";
+      } finally {
+        auditLoading = false;
+        renderAuditLog();
+        if (els.changeLogDialog.open) markAuditSeen();
+      }
+    }
+
+    function startAuditPolling() {
+      if (auditPollTimer) clearInterval(auditPollTimer);
+      loadAuditLog({ notify: true });
+      auditPollTimer = setInterval(() => loadAuditLog({ notify: true }), 20000);
+    }
+
+    function stopAuditPolling() {
+      if (auditPollTimer) clearInterval(auditPollTimer);
+      auditPollTimer = null;
+    }
+
+    function expireChiefSession() {
+      stopAuditPolling();
+      chiefSignedIn = false;
+      chiefToken = "";
+      sessionStorage.removeItem("jhah-chief-token-2027");
+      fundamentalsUnlocked = false;
+      pendingChiefView = null;
+      if (els.changeLogDialog.open) els.changeLogDialog.close();
+      activeView = "requested";
+      document.querySelectorAll(".view-tab").forEach(tab => tab.setAttribute("aria-selected", String(tab.dataset.view === "requested")));
+      render();
+      toast("Chief session expired. Sign in again to continue.", "warn");
+    }
+
+    async function openChangeLog() {
+      if (!chiefSignedIn) return;
+      if (!els.changeLogDialog.open) els.changeLogDialog.showModal();
+      renderAuditLog();
+      await loadAuditLog();
+      markAuditSeen();
+    }
+
+    function auditMetadata() {
+      const area = activeView === "actual" ? "actual" : activeView === "requested" ? "requested" : "schedule";
+      return { actorId: signedResidentId || null, area };
+    }
+
     async function saveChanges(message = "Schedule saved for everyone using this link.") {
       const savedAt = new Date().toISOString();
       let pendingState = cloneSerializable(serializeState(savedAt));
@@ -1699,7 +1929,9 @@
       let exactConflicts = 0;
       try {
         for (let attempt = 0; attempt < 4; attempt++) {
-          const response = await fetch("/api/schedule", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ state: pendingState, baseRevision: pendingRevision }) });
+          const headers = { "content-type": "application/json" };
+          if (chiefSignedIn && chiefToken) headers["x-chief-token"] = chiefToken;
+          const response = await fetch("/api/schedule", { method: "PUT", headers, body: JSON.stringify({ state: pendingState, baseRevision: pendingRevision, audit: auditMetadata() }) });
           const result = await response.json().catch(() => ({}));
           if (response.status === 409) {
             const remoteState = normalizedSerializableState(result.state || {});
@@ -1712,17 +1944,25 @@
             exactConflicts += merged.conflicts;
             continue;
           }
+          if (response.status === 403) {
+            if (chiefSignedIn) expireChiefSession();
+            else toast(result.error || "That change requires chief access.", "warn");
+            return false;
+          }
           if (!response.ok) throw new Error("Shared save failed");
           serverRevision = Number(result.revision) || pendingRevision + 1;
-          applySerializableState(pendingState);
-          lastSyncedState = cloneSerializable(pendingState);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(pendingState));
+          const committedState = result.state ? normalizedSerializableState(result.state) : pendingState;
+          applySerializableState(committedState);
+          lastSyncedState = cloneSerializable(committedState);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(committedState));
           dirty = false;
           setSavedLabel(`Shared save ${formatTimestamp(result.savedAt || savedAt)}`, "is-saved");
           render();
-          if (exactConflicts) toast(`Saved after merging another device. ${exactConflicts} same-field conflict${exactConflicts === 1 ? " was" : "s were"} kept from this device.`, "warn");
+          if (result.noop) toast("Everything is already up to date.", "success");
+          else if (exactConflicts) toast(`Saved after merging another device. ${exactConflicts} same-field conflict${exactConflicts === 1 ? " was" : "s were"} kept from this device.`, "warn");
           else if (mergeCount) toast("Saved successfully after merging changes from another device.", "success");
           else toast(message, "success");
+          if (chiefSignedIn && !result.noop) loadAuditLog({ notify: true });
           return true;
         }
         throw new Error("Schedule remained busy");
@@ -2144,6 +2384,7 @@
       els.editRequests.textContent = person ? `${hasResidentRequest(person) ? "Edit" : "Submit"} ${person.name}'s request` : "Submit my request";
       els.chiefAccess.textContent = chiefSignedIn ? "Chief · Sign out" : "Chief access";
       els.changeChiefPassword.hidden = !chiefSignedIn;
+      renderAuditLog();
       els.roleState.textContent = chiefSignedIn ? "Chief workspace unlocked" : person ? `Resident session · ${person.name}` : "Public schedule view";
       els.roleState.classList.toggle("is-chief", chiefSignedIn);
       document.querySelectorAll('.view-tab[data-view="actual"], .view-tab[data-view="comparison"], .view-tab[data-view="specialty"]').forEach(tab => {
@@ -2289,6 +2530,7 @@
       pendingChiefView = null;
       toast("Chief workspace unlocked.", "success");
       setView(target);
+      startAuditPolling();
     }
 
     function openChangeChiefPasswordDialog() {
@@ -2320,9 +2562,13 @@
     }
 
     function signOutChief() {
+      stopAuditPolling();
       chiefSignedIn = false;
+      chiefToken = "";
+      sessionStorage.removeItem("jhah-chief-token-2027");
       fundamentalsUnlocked = false;
       pendingChiefView = null;
+      if (els.changeLogDialog.open) els.changeLogDialog.close();
       if (activeView !== "requested") activeView = "requested";
       document.querySelectorAll(".view-tab").forEach(tab => tab.setAttribute("aria-selected", String(tab.dataset.view === "requested")));
       render();
@@ -2579,7 +2825,10 @@
     function signInResident(id) {
       const person = requestedResidents.find(item => item.id === id);
       if (!person || person.level === "R1") return;
+      stopAuditPolling();
       chiefSignedIn = false;
+      chiefToken = "";
+      sessionStorage.removeItem("jhah-chief-token-2027");
       signedResidentId = id;
       els.residentDialog.close();
       if (activeView !== "requested") setView("requested");
@@ -2682,23 +2931,26 @@
     async function resetBaseline() {
       if (!chiefToken) { openChiefDialog(); toast("Chief password is required to restore the baseline.", "warn"); return; }
       if (!confirm("Restore the exact image baseline for everyone? This removes all shared requested and final changes.")) return;
-      const response = await fetch("/api/baseline/restore", { method: "POST", headers: { "x-chief-token": chiefToken } });
-      if (!response.ok) { toast("Chief password is required to restore the baseline.", "warn"); return; }
-      requestedResidents = cloneResidents(BASELINE);
-      actualResidents = cloneResidents(BASELINE);
-      requestMeta = {};
-      deletedResidentIds = new Set();
-      requestedFundamentalCells = new Set(BASELINE_FUNDAMENTAL_CELLS);
-      actualFundamentalCells = new Set(BASELINE_FUNDAMENTAL_CELLS);
+      const baselineState = { version: 6, savedAt: new Date().toISOString(), requestedResidents: cloneResidents(BASELINE), actualResidents: cloneResidents(BASELINE), requestMeta: {}, deletedResidentIds: [], requestedFundamentalCells: [...BASELINE_FUNDAMENTAL_CELLS], actualFundamentalCells: [...BASELINE_FUNDAMENTAL_CELLS], theme: els.theme.value };
+      const response = await fetch("/api/baseline/restore", { method: "POST", headers: { "content-type": "application/json", "x-chief-token": chiefToken }, body: JSON.stringify({ state: baselineState }) });
+      const result = await response.json().catch(() => ({}));
+      if (response.status === 401) { expireChiefSession(); return; }
+      if (!response.ok) { toast(result.error || "The baseline could not be restored.", "warn"); return; }
+      const committedState = result.state ? normalizedSerializableState(result.state) : baselineState;
+      applySerializableState(committedState);
       signedResidentId = null;
+      stopAuditPolling();
       chiefSignedIn = false;
+      chiefToken = "";
+      sessionStorage.removeItem("jhah-chief-token-2027");
       selectedRotation = null;
       fundamentalsUnlocked = false;
       undoStack = [];
       redoStack = [];
       dirty = false;
-      serverRevision = 0;
-      lastSyncedState = cloneSerializable(serializeState());
+      serverRevision = Number(result.revision) || serverRevision + 1;
+      lastSyncedState = cloneSerializable(committedState);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(committedState));
       setSavedLabel("Reference baseline");
       setView("requested");
       toast("Both schedules were restored to the supplied image baseline.", "success");
@@ -3346,6 +3598,8 @@
     els.theme.addEventListener("change", () => { setTheme(els.theme.value); markDirty(); });
     els.account.addEventListener("click", openResidentDialog);
     els.chiefAccess.addEventListener("click", () => chiefSignedIn ? signOutChief() : openChiefDialog("actual"));
+    els.changeLog.addEventListener("click", openChangeLog);
+    els.refreshChangeLog.addEventListener("click", async () => { await loadAuditLog(); markAuditSeen(); });
     els.changeChiefPassword.addEventListener("click", openChangeChiefPasswordDialog);
     els.manageResidents.addEventListener("click", openResidentManager);
     els.compareResidents.addEventListener("click", openResidentComparison);
@@ -3580,6 +3834,10 @@
 
     window.matchMedia("(max-width: 720px)").addEventListener("change", event => {
       if (!event.matches && mobileScheduleMode === "table") setMobileScheduleMode("cards");
+    });
+
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden && chiefSignedIn) loadAuditLog({ notify: true });
     });
 
     loadSaved();
