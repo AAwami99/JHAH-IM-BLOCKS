@@ -1422,6 +1422,7 @@
     const STORAGE_KEY = "jhah-resident-block-distribution-2027-v2";
     const LEGACY_KEY = "jhah-resident-block-distribution-2027-v1";
     const AUDIT_SEEN_KEY = "jhah-chief-audit-seen-2027";
+    const CHIEF_TOKEN_KEY = "jhah-chief-token-2027";
     const BASELINE_FUNDAMENTAL_CELLS = new Set();
     BASELINE.forEach(person => person.assignments.forEach((value, index) => {
       if (value) BASELINE_FUNDAMENTAL_CELLS.add(`${person.id}:${index}`);
@@ -1452,7 +1453,10 @@
       return [...normalizedBaseline, ...savedAdditions];
     };
 
-    let chiefToken = sessionStorage.getItem("jhah-chief-token-2027") || "";
+    let chiefToken = (() => {
+      try { return localStorage.getItem(CHIEF_TOKEN_KEY) || sessionStorage.getItem(CHIEF_TOKEN_KEY) || ""; }
+      catch { return sessionStorage.getItem(CHIEF_TOKEN_KEY) || ""; }
+    })();
 
     let requestedResidents = cloneResidents(BASELINE);
     let actualResidents = cloneResidents(BASELINE);
@@ -1894,11 +1898,19 @@
       auditPollTimer = null;
     }
 
+    function rememberChiefToken(token) {
+      chiefToken = token || "";
+      try {
+        if (chiefToken) localStorage.setItem(CHIEF_TOKEN_KEY, chiefToken);
+        else localStorage.removeItem(CHIEF_TOKEN_KEY);
+      } catch (error) { console.warn("Chief access could not be remembered", error); }
+      try { sessionStorage.removeItem(CHIEF_TOKEN_KEY); } catch (error) { console.warn(error); }
+    }
+
     function expireChiefSession() {
       stopAuditPolling();
       chiefSignedIn = false;
-      chiefToken = "";
-      sessionStorage.removeItem("jhah-chief-token-2027");
+      rememberChiefToken("");
       fundamentalsUnlocked = false;
       pendingChiefView = null;
       if (els.changeLogDialog.open) els.changeLogDialog.close();
@@ -1906,6 +1918,30 @@
       document.querySelectorAll(".view-tab").forEach(tab => tab.setAttribute("aria-selected", String(tab.dataset.view === "requested")));
       render();
       toast("Chief session expired. Sign in again to continue.", "warn");
+    }
+
+    async function restoreChiefSession() {
+      if (!chiefToken) return false;
+      try {
+        const response = await fetch("/api/chief/session", { headers: { "x-chief-token": chiefToken }, cache: "no-store" });
+        if (response.status === 401) {
+          rememberChiefToken("");
+          toast("Saved chief access does not match this network. Sign in again.", "warn");
+          return false;
+        }
+        if (!response.ok) throw new Error("Chief session check failed");
+        const result = await response.json();
+        rememberChiefToken(result.token || chiefToken);
+        chiefSignedIn = true;
+        signedResidentId = null;
+        render();
+        startAuditPolling();
+        return true;
+      } catch (error) {
+        // A sleeping or offline server must not erase a valid remembered sign-in.
+        console.warn("Saved chief access could not be checked", error);
+        return false;
+      }
     }
 
     async function openChangeLog() {
@@ -2521,8 +2557,7 @@
       event.preventDefault();
       const response = await fetch("/api/chief/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: els.chiefPassword.value }) });
       if (!response.ok) { els.chiefError.textContent = "Incorrect password. Please try again."; els.chiefPassword.select(); return; }
-      chiefToken = (await response.json()).token;
-      sessionStorage.setItem("jhah-chief-token-2027", chiefToken);
+      rememberChiefToken((await response.json()).token);
       chiefSignedIn = true;
       signedResidentId = null;
       els.chiefDialog.close();
@@ -2564,8 +2599,7 @@
     function signOutChief() {
       stopAuditPolling();
       chiefSignedIn = false;
-      chiefToken = "";
-      sessionStorage.removeItem("jhah-chief-token-2027");
+      rememberChiefToken("");
       fundamentalsUnlocked = false;
       pendingChiefView = null;
       if (els.changeLogDialog.open) els.changeLogDialog.close();
@@ -2827,8 +2861,7 @@
       if (!person || person.level === "R1") return;
       stopAuditPolling();
       chiefSignedIn = false;
-      chiefToken = "";
-      sessionStorage.removeItem("jhah-chief-token-2027");
+      rememberChiefToken("");
       signedResidentId = id;
       els.residentDialog.close();
       if (activeView !== "requested") setView("requested");
@@ -2941,8 +2974,7 @@
       signedResidentId = null;
       stopAuditPolling();
       chiefSignedIn = false;
-      chiefToken = "";
-      sessionStorage.removeItem("jhah-chief-token-2027");
+      rememberChiefToken("");
       selectedRotation = null;
       fundamentalsUnlocked = false;
       undoStack = [];
@@ -3840,9 +3872,12 @@
       if (!document.hidden && chiefSignedIn) loadAuditLog({ notify: true });
     });
 
-    loadSaved();
     restoreThemePreference();
     render();
+    (async () => {
+      await loadSaved();
+      await restoreChiefSession();
+    })();
   </script>
 </body>
 </html>

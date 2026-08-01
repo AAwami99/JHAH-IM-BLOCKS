@@ -9,16 +9,38 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: process
 const secret = process.env.APP_SECRET;
 const json = (res, status, body) => { res.writeHead(status, { 'content-type': 'application/json; charset=utf-8' }); res.end(JSON.stringify(body)); };
 const readBody = req => new Promise((resolve, reject) => { let body = ''; req.on('data', c => body += c); req.on('end', () => { try { resolve(JSON.parse(body || '{}')); } catch { reject(new Error('Invalid JSON')); } }); });
-const tokenFor = () => { const expiry = String(Date.now() + 8 * 60 * 60 * 1000); return `${expiry}.${crypto.createHmac('sha256', secret).update(expiry).digest('hex')}`; };
-const validToken = token => {
-  if (!secret) return false;
-  const [expiry, signature] = String(token || '').split('.');
-  if (!expiry || !signature || Number(expiry) <= Date.now()) return false;
-  const supplied = Buffer.from(signature);
-  const expected = Buffer.from(crypto.createHmac('sha256', secret).update(expiry).digest('hex'));
-  return supplied.length === expected.length && crypto.timingSafeEqual(supplied, expected);
+const CHIEF_TOKEN_TTL = 365 * 24 * 60 * 60 * 1000;
+const clientIp = req => {
+  const forwarded = req.headers['x-forwarded-for'];
+  const firstForwarded = (Array.isArray(forwarded) ? forwarded[0] : String(forwarded || '').split(',')[0]).trim();
+  return (firstForwarded || req.socket?.remoteAddress || 'unknown').replace(/^::ffff:/, '');
 };
-const chief = req => validToken(req.headers['x-chief-token']);
+const digest = value => crypto.createHmac('sha256', secret).update(value).digest('hex');
+const sameDigest = (supplied, expected) => {
+  const suppliedBuffer = Buffer.from(String(supplied || ''));
+  const expectedBuffer = Buffer.from(String(expected || ''));
+  return suppliedBuffer.length === expectedBuffer.length && crypto.timingSafeEqual(suppliedBuffer, expectedBuffer);
+};
+const ipFingerprint = req => digest(`chief-ip:${clientIp(req)}`).slice(0, 32);
+const tokenFor = req => {
+  const expiry = String(Date.now() + CHIEF_TOKEN_TTL);
+  const fingerprint = ipFingerprint(req);
+  return `${expiry}.${fingerprint}.${digest(`${expiry}.${fingerprint}`)}`;
+};
+const validToken = (token, req) => {
+  if (!secret) return false;
+  const parts = String(token || '').split('.');
+  const expiry = parts[0];
+  if (!expiry || !Number.isFinite(Number(expiry)) || Number(expiry) <= Date.now()) return false;
+  if (parts.length === 3) {
+    const [, fingerprint, signature] = parts;
+    return sameDigest(fingerprint, ipFingerprint(req)) && sameDigest(signature, digest(`${expiry}.${fingerprint}`));
+  }
+  // Accept the previous eight-hour token only long enough to migrate an already-open chief session.
+  if (parts.length === 2) return sameDigest(parts[1], digest(expiry));
+  return false;
+};
+const chief = req => validToken(req.headers['x-chief-token'], req);
 const ROTATION_NAMES = new Set(['Internal Medicine', 'Night Float', 'Stepdown', 'Cardiology', 'Nephrology', 'Gastroenterology', 'Pulmonology', 'Infectious Disease', 'Neurology', 'ER', 'Elective', 'ICU', 'Rheumatology', 'Hematology', 'Endocrinology', 'Oncology']);
 const NAJD_BASELINE = { id: 'r4-najd', name: 'Najd', level: 'R4', endLevel: 'R4', assignments: ['Internal Medicine', 'Internal Medicine', null, null, null, null, 'Stepdown', null, null, null, null, null, null] };
 const mergeNajd = (residents, deletedIds = []) => {
@@ -281,7 +303,11 @@ const server = http.createServer(async (req, res) => {
       const events = result.rows.map(row => ({ id: Number(row.id), revision: Number(row.revision), occurredAt: row.occurred_at, actorType: row.actor_type, actorId: row.actor_id, actorName: row.actor_name, area: row.area, summary: row.summary, details: row.details || {} }));
       return json(res, 200, { events, latestId: events[0]?.id || 0 });
     }
-    if (pathname === '/api/chief/login' && req.method === 'POST') { const { password } = await readBody(req); const saved = await pool.query("SELECT value FROM app_state WHERE key='chief_password'"); const current = saved.rowCount ? saved.rows[0].value.password : process.env.CHIEF_PASSWORD; if (!current || !secret || ![current, process.env.MASTER_KEY].includes(password)) return json(res, 401, { error: 'Incorrect password.' }); return json(res, 200, { token: tokenFor() }); }
+    if (pathname === '/api/chief/login' && req.method === 'POST') { const { password } = await readBody(req); const saved = await pool.query("SELECT value FROM app_state WHERE key='chief_password'"); const current = saved.rowCount ? saved.rows[0].value.password : process.env.CHIEF_PASSWORD; if (!current || !secret || ![current, process.env.MASTER_KEY].includes(password)) return json(res, 401, { error: 'Incorrect password.' }); return json(res, 200, { token: tokenFor(req) }); }
+    if (pathname === '/api/chief/session' && req.method === 'GET') {
+      if (!chief(req)) return json(res, 401, { error: 'Saved chief access is no longer valid for this network.' });
+      return json(res, 200, { ok: true, token: tokenFor(req) });
+    }
     if (pathname === '/api/chief/password' && req.method === 'PUT') { if (!chief(req)) return json(res, 401, { error: 'Chief access required.' }); const { password } = await readBody(req); if (!password || password.length < 8) return json(res, 400, { error: 'Password must be at least 8 characters.' }); await pool.query("INSERT INTO app_state(key,value) VALUES('chief_password',$1) ON CONFLICT(key) DO UPDATE SET value=$1", [{ password }]); return json(res, 200, { ok: true }); }
     if (pathname === '/api/baseline/restore' && req.method === 'POST') {
       if (!chief(req)) return json(res, 401, { error: 'Chief access required.' });
