@@ -690,22 +690,42 @@
     .compare-report-summary strong { font-size: 13px; }
     .compare-report-summary span { margin-top: 3px; color: var(--muted); font-size: 9px; }
     .compare-report-summary b { font-size: 23px; color: var(--accent); white-space: nowrap; }
+    .mutual-rotation-panel { overflow: hidden; margin-bottom: 14px; border: 1px solid var(--accent); border-radius: 9px; background: var(--paper); }
+    .mutual-rotation-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 12px; background: var(--nav); color: var(--nav-ink); }
+    .mutual-rotation-head strong, .mutual-rotation-head span { display: block; }
+    .mutual-rotation-head strong { font-size: 12px; }
+    .mutual-rotation-head span { margin-top: 2px; font-size: 8px; opacity: .72; }
+    .mutual-rotation-head b { font-size: 11px; white-space: nowrap; }
+    .mutual-block-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; padding: 10px; }
+    .mutual-block-card { min-width: 0; padding: 9px 10px; border: 1px solid var(--choice-border, var(--line)); border-radius: 7px; background: var(--choice-fill, var(--paper-2)); color: var(--choice-ink, var(--ink)); }
+    .mutual-block-card strong, .mutual-block-card span { display: block; }
+    .mutual-block-card strong { overflow: hidden; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+    .mutual-block-card span { margin-top: 3px; font-size: 8px; font-weight: 700; opacity: .75; }
+    .mutual-empty { padding: 14px 12px; color: var(--muted); font-size: 10px; text-align: center; }
+    .mutual-shared-types { display: flex; align-items: baseline; gap: 8px; padding: 9px 11px; border-top: 1px solid var(--line); background: var(--paper-2); }
+    .mutual-shared-types strong { flex: 0 0 auto; font-size: 9px; }
+    .mutual-shared-types span { color: var(--muted); font-size: 9px; line-height: 1.45; }
     .compare-report-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; margin: 15px 0 8px; }
     .compare-report-heading strong { font-size: 12px; }
     .compare-report-heading span { color: var(--muted); font-size: 9px; }
     .compare-rotation-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
     .compare-rotation-card { overflow: hidden; border: 1px solid var(--choice-border, var(--line)); border-radius: 8px; background: var(--paper); }
+    .compare-rotation-card.is-shared { box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 22%, transparent); }
     .compare-rotation-name { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 39px; padding: 8px 10px; background: var(--choice-fill, var(--paper-2)); color: var(--choice-ink, var(--ink)); }
     .compare-rotation-name strong { font-size: 10px; }
     .compare-rotation-name b { font-size: 17px; }
+    .compare-rotation-title { min-width: 0; }
+    .compare-shared-badge { display: inline-flex; margin-top: 3px; padding: 2px 5px; border: 1px solid currentColor; border-radius: 999px; font-size: 7px; font-weight: 850; opacity: .76; text-transform: uppercase; letter-spacing: .05em; }
     .compare-person-counts { display: grid; gap: 4px; padding: 8px 10px; }
     .compare-person-count { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 9px; }
     .compare-person-count b { color: var(--ink); }
     .compare-block-list { display: grid; gap: 7px; }
     .compare-block-card { display: grid; grid-template-columns: 130px 1fr; gap: 10px; align-items: center; padding: 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
+    .compare-block-card.is-mutual { border-color: var(--accent); background: linear-gradient(90deg, var(--accent-soft), var(--paper) 48%); box-shadow: inset 3px 0 0 var(--accent); }
     .compare-block-meta strong, .compare-block-meta span { display: block; }
     .compare-block-meta strong { font-size: 11px; }
     .compare-block-meta span { margin-top: 2px; color: var(--muted); font-size: 8px; }
+    .compare-mutual-badge { display: inline-flex !important; width: max-content; margin-top: 5px !important; padding: 2px 5px; border-radius: 999px; background: var(--accent); color: #fff !important; font-size: 7px !important; font-weight: 850; text-transform: uppercase; letter-spacing: .04em; }
     .compare-block-assignments { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
     .compare-assignment-chip { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; min-height: 36px; padding: 7px 9px; border: 1px solid var(--choice-border, var(--line)); border-radius: 6px; background: var(--choice-fill, var(--paper-2)); color: var(--choice-ink, var(--ink)); }
     .compare-assignment-chip span { overflow: hidden; font-size: 9px; font-weight: 760; text-overflow: ellipsis; white-space: nowrap; }
@@ -889,6 +909,9 @@
       .fundamental-editor-row { grid-template-columns: 94px minmax(0, 1fr); }
       .fundamental-toggle { grid-column: 1 / -1; justify-content: flex-start; }
       .compare-resident-controls, .compare-resident-list, .compare-rotation-grid { grid-template-columns: 1fr; }
+      .mutual-rotation-head { align-items: flex-start; }
+      .mutual-block-grid { grid-template-columns: 1fr; }
+      .mutual-shared-types { display: grid; gap: 3px; }
       .compare-block-card, .compare-block-assignments { grid-template-columns: 1fr; }
       .request-row { grid-template-columns: 1fr auto; gap: 7px 10px; padding: 10px; }
       .request-row .block-name { grid-column: 1; }
@@ -2826,15 +2849,29 @@
           person,
           count: person.assignments.filter(value => value === rotation.name).length,
         }));
-        return { rotation, counts, total: counts.reduce((sum, item) => sum + item.count, 0) };
+        return { rotation, counts, total: counts.reduce((sum, item) => sum + item.count, 0), sharedByAll: counts.every(item => item.count > 0) };
       }).filter(item => item.total > 0);
-      const rotationHtml = rotationCards.length ? rotationCards.map(item => `<article class="compare-rotation-card" style="${choiceStyle(item.rotation.name)}"><div class="compare-rotation-name"><strong>${escapeHtml(item.rotation.name)}</strong><b>${item.total}</b></div><div class="compare-person-counts">${item.counts.map(entry => `<div class="compare-person-count"><span>${escapeHtml(entry.person.name)}</span><b>${entry.count}</b></div>`).join("")}</div></article>`).join("") : `<div class="resident-empty">These residents do not have any final rotations yet.</div>`;
-      const blocksHtml = BLOCKS.map(([block, dates], blockIndex) => `<article class="compare-block-card"><div class="compare-block-meta"><strong>${escapeHtml(block)}</strong><span>${escapeHtml(dates)}</span></div><div class="compare-block-assignments">${residents.map(person => {
+      const mutualBlocks = BLOCKS.map(([block, dates], blockIndex) => {
+        const values = residents.map(person => person.assignments[blockIndex] || null);
+        const rotation = values[0] && values.every(value => value === values[0]) ? values[0] : null;
+        return { block, dates, blockIndex, rotation };
+      }).filter(item => item.rotation);
+      const mutualByBlock = new Map(mutualBlocks.map(item => [item.blockIndex, item.rotation]));
+      const sharedRotationNames = rotationCards.filter(item => item.sharedByAll).map(item => item.rotation.name);
+      const mutualBlocksHtml = mutualBlocks.length
+        ? `<div class="mutual-block-grid">${mutualBlocks.map(item => `<article class="mutual-block-card" style="${choiceStyle(item.rotation)}"><strong>${escapeHtml(item.rotation)}</strong><span>${escapeHtml(item.block)} · ${escapeHtml(item.dates)}</span></article>`).join("")}</div>`
+        : `<div class="mutual-empty">No selected residents share the same rotation in the same block.</div>`;
+      const mutualHtml = `<section class="mutual-rotation-panel"><div class="mutual-rotation-head"><div><strong>Mutual rotations</strong><span>Same rotation in the same block for all selected residents</span></div><b>${mutualBlocks.length} mutual block${mutualBlocks.length === 1 ? "" : "s"}</b></div>${mutualBlocksHtml}<div class="mutual-shared-types"><strong>Shared across the year</strong><span>${escapeHtml(sharedRotationNames.length ? sharedRotationNames.join(" · ") : "No rotation type is completed by every selected resident.")}</span></div></section>`;
+      const rotationHtml = rotationCards.length ? rotationCards.map(item => `<article class="compare-rotation-card ${item.sharedByAll ? "is-shared" : ""}" style="${choiceStyle(item.rotation.name)}"><div class="compare-rotation-name"><div class="compare-rotation-title"><strong>${escapeHtml(item.rotation.name)}</strong>${item.sharedByAll ? `<span class="compare-shared-badge">Shared by all</span>` : ""}</div><b>${item.total}</b></div><div class="compare-person-counts">${item.counts.map(entry => `<div class="compare-person-count"><span>${escapeHtml(entry.person.name)}</span><b>${entry.count}</b></div>`).join("")}</div></article>`).join("") : `<div class="resident-empty">These residents do not have any final rotations yet.</div>`;
+      const blocksHtml = BLOCKS.map(([block, dates], blockIndex) => {
+        const mutualRotation = mutualByBlock.get(blockIndex);
+        return `<article class="compare-block-card ${mutualRotation ? "is-mutual" : ""}"><div class="compare-block-meta"><strong>${escapeHtml(block)}</strong><span>${escapeHtml(dates)}</span>${mutualRotation ? `<span class="compare-mutual-badge">Mutual · ${escapeHtml(mutualRotation)}</span>` : ""}</div><div class="compare-block-assignments">${residents.map(person => {
         const value = person.assignments[blockIndex];
         return `<div class="compare-assignment-chip ${value ? "" : "is-open"}" style="${choiceStyle(value)}"><span>${escapeHtml(person.name)} · ${escapeHtml(person.level)}</span><strong>${escapeHtml(value || "Open")}</strong></div>`;
-      }).join("")}</div></article>`).join("");
+      }).join("")}</div></article>`;
+      }).join("");
       els.compareResidentReportSubtitle.textContent = residents.map(person => `${person.name} · ${person.level}`).join("  |  ");
-      els.compareResidentReport.innerHTML = `<div class="compare-report-summary"><div><strong>${residents.length} residents compared</strong><span>Final Done by the Chief · read-only comparison</span></div><b>${totalAssignments} slots</b></div><div class="compare-report-heading"><strong>Combined rotation counter</strong><span>Total first, then each resident's count</span></div><div class="compare-rotation-grid">${rotationHtml}</div><div class="compare-report-heading"><strong>Block-by-block comparison</strong><span>All 13 final blocks</span></div><div class="compare-block-list">${blocksHtml}</div>`;
+      els.compareResidentReport.innerHTML = `<div class="compare-report-summary"><div><strong>${residents.length} residents compared</strong><span>Final Done by the Chief · read-only comparison</span></div><b>${totalAssignments} slots</b></div>${mutualHtml}<div class="compare-report-heading"><strong>Combined rotation counter</strong><span>Total first, then each resident's count</span></div><div class="compare-rotation-grid">${rotationHtml}</div><div class="compare-report-heading"><strong>Block-by-block comparison</strong><span>Mutual blocks are highlighted · All 13 final blocks</span></div><div class="compare-block-list">${blocksHtml}</div>`;
       els.compareResidentPickerView.hidden = true;
       els.compareResidentReportView.hidden = false;
       els.compareResidentReport.scrollTop = 0;
