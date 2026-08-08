@@ -685,30 +685,42 @@
     .compare-resident-option strong, .compare-resident-option small { display: block; }
     .compare-resident-option strong { font-size: 11px; }
     .compare-resident-option small { margin-top: 2px; color: var(--muted); font-size: 8px; }
-    .compare-report-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; padding: 12px; border: 1px solid var(--accent); border-radius: 8px; background: var(--accent-soft); }
+    .compare-report-summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 12px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
     .compare-report-summary strong, .compare-report-summary span { display: block; }
-    .compare-report-summary strong { font-size: 13px; }
-    .compare-report-summary span { margin-top: 3px; color: var(--muted); font-size: 9px; }
-    .compare-report-summary b { font-size: 23px; color: var(--accent); white-space: nowrap; }
-    .shared-arrangement-panel { overflow: hidden; margin-bottom: 14px; border: 1px solid var(--accent); border-radius: 9px; background: var(--paper); }
-    .shared-arrangement-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 12px; background: var(--nav); color: var(--nav-ink); }
-    .shared-arrangement-head strong, .shared-arrangement-head span { display: block; }
-    .shared-arrangement-head strong { font-size: 12px; }
-    .shared-arrangement-head span { margin-top: 2px; font-size: 8px; opacity: .72; }
-    .shared-arrangement-head b { font-size: 11px; white-space: nowrap; }
-    .shared-block-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; padding: 10px; }
-    .shared-block-card { min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 7px; background: var(--paper); }
-    .shared-block-card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 7px 8px; border-bottom: 1px solid var(--line); background: var(--paper-2); }
-    .shared-block-card-head strong { font-size: 10px; }
-    .shared-block-card-head span { color: var(--muted); font-size: 7px; white-space: nowrap; }
-    .shared-block-residents { display: grid; gap: 5px; padding: 6px; }
-    .shared-block-assignment { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 7px; align-items: center; min-height: 31px; padding: 6px 7px; border: 1px solid var(--choice-border, var(--line)); border-radius: 5px; background: var(--choice-fill, var(--paper-2)); color: var(--choice-ink, var(--ink)); }
-    .shared-block-assignment span { overflow: hidden; font-size: 8px; font-weight: 760; text-overflow: ellipsis; white-space: nowrap; }
-    .shared-block-assignment strong { font-size: 8px; text-align: right; }
-    .shared-block-assignment.is-open { border-style: dashed; color: var(--muted); background: var(--paper-2); }
-    .compare-report-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; margin: 15px 0 8px; }
-    .compare-report-heading strong { font-size: 12px; }
-    .compare-report-heading span { color: var(--muted); font-size: 9px; }
+    .compare-report-summary > div:first-child strong { font-size: 13px; }
+    .compare-report-summary > div:first-child span { margin-top: 3px; color: var(--muted); font-size: 9px; }
+    .compare-summary-stats { display: flex; flex: 0 0 auto; align-self: stretch; }
+    .compare-summary-stat { display: grid; min-width: 78px; place-content: center; padding: 0 12px; border-left: 1px solid var(--line); text-align: center; }
+    .compare-summary-stat b { color: var(--accent); font-size: 18px; line-height: 1; }
+    .compare-summary-stat span { margin-top: 3px; color: var(--muted); font-size: 7px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+    .compare-section { overflow: hidden; margin-top: 11px; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); }
+    .compare-section.shared { border-color: var(--accent); }
+    .compare-section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border-bottom: 1px solid var(--line); background: var(--paper-2); }
+    .compare-section.shared .compare-section-head { border-bottom-color: color-mix(in srgb, var(--accent) 35%, var(--line)); background: var(--nav); color: var(--nav-ink); }
+    .compare-section-head strong, .compare-section-head span { display: block; }
+    .compare-section-head strong { font-size: 12px; }
+    .compare-section-head span { margin-top: 2px; color: var(--muted); font-size: 8px; }
+    .compare-section.shared .compare-section-head span { color: inherit; opacity: .7; }
+    .compare-section-count { flex: 0 0 auto; font-size: 10px; font-weight: 850; white-space: nowrap; }
+    .shared-match-list { display: grid; }
+    .shared-match-row { display: grid; grid-template-columns: 110px minmax(145px, .8fr) minmax(0, 1fr); gap: 10px; align-items: center; padding: 9px 11px; border-top: 1px solid var(--line); }
+    .shared-match-row:first-child { border-top: 0; }
+    .shared-match-meta strong, .shared-match-meta span { display: block; }
+    .shared-match-meta strong { font-size: 10px; }
+    .shared-match-meta span { margin-top: 2px; color: var(--muted); font-size: 8px; }
+    .shared-match-rotation { padding: 8px 9px; border: 1px solid var(--choice-border, var(--line)); border-radius: 6px; background: var(--choice-fill, var(--paper-2)); color: var(--choice-ink, var(--ink)); font-size: 9px; font-weight: 830; text-align: center; }
+    .shared-match-residents { overflow: hidden; color: var(--muted); font-size: 8px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+    .compare-section-empty { padding: 15px 12px; color: var(--muted); font-size: 9px; text-align: center; }
+    .compare-different-body { padding: 0 10px; }
+    .compare-totals { overflow: hidden; margin-top: 11px; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); }
+    .compare-totals summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; cursor: pointer; list-style: none; background: var(--paper-2); }
+    .compare-totals summary::-webkit-details-marker { display: none; }
+    .compare-totals summary strong, .compare-totals summary small { display: block; }
+    .compare-totals summary strong { font-size: 11px; }
+    .compare-totals summary small { margin-top: 2px; color: var(--muted); font-size: 8px; }
+    .compare-totals summary span { color: var(--accent); font-size: 9px; font-weight: 830; }
+    .compare-totals[open] summary { border-bottom: 1px solid var(--line); }
+    .compare-totals-grid { padding: 10px; }
     .compare-rotation-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
     .compare-rotation-card { overflow: hidden; border: 1px solid var(--choice-border, var(--line)); border-radius: 8px; background: var(--paper); }
     .compare-rotation-name { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 39px; padding: 8px 10px; background: var(--choice-fill, var(--paper-2)); color: var(--choice-ink, var(--ink)); }
@@ -717,8 +729,9 @@
     .compare-person-counts { display: grid; gap: 4px; padding: 8px 10px; }
     .compare-person-count { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 9px; }
     .compare-person-count b { color: var(--ink); }
-    .compare-block-list { display: grid; gap: 7px; }
-    .compare-block-card { display: grid; grid-template-columns: 130px 1fr; gap: 10px; align-items: center; padding: 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
+    .compare-block-list { display: grid; }
+    .compare-block-card { display: grid; grid-template-columns: 120px 1fr; gap: 10px; align-items: center; padding: 9px 1px; border-top: 1px solid var(--line); background: var(--paper); }
+    .compare-block-card:first-child { border-top: 0; }
     .compare-block-meta strong, .compare-block-meta span { display: block; }
     .compare-block-meta strong { font-size: 11px; }
     .compare-block-meta span { margin-top: 2px; color: var(--muted); font-size: 8px; }
@@ -905,8 +918,12 @@
       .fundamental-editor-row { grid-template-columns: 94px minmax(0, 1fr); }
       .fundamental-toggle { grid-column: 1 / -1; justify-content: flex-start; }
       .compare-resident-controls, .compare-resident-list, .compare-rotation-grid { grid-template-columns: 1fr; }
-      .shared-arrangement-head { align-items: flex-start; }
-      .shared-block-grid { grid-template-columns: 1fr; }
+      .compare-report-summary { flex-direction: column; align-items: stretch; gap: 9px; }
+      .compare-summary-stats { width: 100%; border-top: 1px solid var(--line); }
+      .compare-summary-stat { flex: 1 1 0; min-width: 0; padding: 8px 8px 0; }
+      .compare-summary-stat:first-child { border-left: 0; }
+      .shared-match-row { grid-template-columns: 1fr; gap: 6px; }
+      .shared-match-residents { white-space: normal; }
       .compare-block-card, .compare-block-assignments { grid-template-columns: 1fr; }
       .request-row { grid-template-columns: 1fr auto; gap: 7px 10px; padding: 10px; }
       .request-row .block-name { grid-column: 1; }
@@ -2838,7 +2855,6 @@
         toast("Select at least two residents to compare.", "warn");
         return;
       }
-      const totalAssignments = residents.reduce((total, person) => total + person.assignments.filter(Boolean).length, 0);
       const rotationCards = ROTATIONS.map(rotation => {
         const counts = residents.map(person => ({
           person,
@@ -2846,20 +2862,28 @@
         }));
         return { rotation, counts, total: counts.reduce((sum, item) => sum + item.count, 0) };
       }).filter(item => item.total > 0);
-      const sharedBlocksHtml = BLOCKS.map(([block, dates], blockIndex) => `<article class="shared-block-card"><div class="shared-block-card-head"><strong>${escapeHtml(block)}</strong><span>${escapeHtml(dates)}</span></div><div class="shared-block-residents">${residents.map(person => {
-        const value = person.assignments[blockIndex];
-        return `<div class="shared-block-assignment ${value ? "" : "is-open"}" style="${choiceStyle(value)}"><span>${escapeHtml(person.name)} · ${escapeHtml(person.level)}</span><strong>${escapeHtml(value || "Open")}</strong></div>`;
-      }).join("")}</div></article>`).join("");
-      const sharedArrangementHtml = `<section class="shared-arrangement-panel"><div class="shared-arrangement-head"><div><strong>Shared block arrangements</strong><span>Concurrent rotations for the same block, in chronological order</span></div><b>${BLOCKS.length} shared blocks</b></div><div class="shared-block-grid">${sharedBlocksHtml}</div></section>`;
+      const partitions = BLOCKS.reduce((result, [block, dates], blockIndex) => {
+        const assignments = residents.map(person => ({
+          person,
+          value: String(person.assignments[blockIndex] || "").trim(),
+        }));
+        const rotation = assignments[0].value;
+        const isShared = Boolean(rotation) && assignments.every(item => item.value === rotation);
+        result[isShared ? "shared" : "different"].push({ block, dates, blockIndex, rotation, assignments });
+        return result;
+      }, { shared: [], different: [] });
+      const sharedBlocksHtml = partitions.shared.length
+        ? `<div class="shared-match-list">${partitions.shared.map(item => `<article class="shared-match-row"><div class="shared-match-meta"><strong>${escapeHtml(item.block)}</strong><span>${escapeHtml(item.dates)}</span></div><div class="shared-match-rotation" style="${choiceStyle(item.rotation)}">${escapeHtml(item.rotation)}</div><div class="shared-match-residents">${escapeHtml(item.assignments.map(entry => `${entry.person.name} · ${entry.person.level}`).join("  |  "))}</div></article>`).join("")}</div>`
+        : `<div class="compare-section-empty">No identical block assignments between the selected residents.</div>`;
+      const sharedSectionHtml = `<section class="compare-section shared"><div class="compare-section-head"><div><strong>Shared blocks</strong><span>Same rotation in the same block for every selected resident</span></div><b class="compare-section-count">${partitions.shared.length} of ${BLOCKS.length}</b></div>${sharedBlocksHtml}</section>`;
       const rotationHtml = rotationCards.length ? rotationCards.map(item => `<article class="compare-rotation-card" style="${choiceStyle(item.rotation.name)}"><div class="compare-rotation-name"><strong>${escapeHtml(item.rotation.name)}</strong><b>${item.total}</b></div><div class="compare-person-counts">${item.counts.map(entry => `<div class="compare-person-count"><span>${escapeHtml(entry.person.name)}</span><b>${entry.count}</b></div>`).join("")}</div></article>`).join("") : `<div class="resident-empty">These residents do not have any final rotations yet.</div>`;
-      const blocksHtml = BLOCKS.map(([block, dates], blockIndex) => {
-        return `<article class="compare-block-card"><div class="compare-block-meta"><strong>${escapeHtml(block)}</strong><span>${escapeHtml(dates)}</span></div><div class="compare-block-assignments">${residents.map(person => {
-        const value = person.assignments[blockIndex];
-        return `<div class="compare-assignment-chip ${value ? "" : "is-open"}" style="${choiceStyle(value)}"><span>${escapeHtml(person.name)} · ${escapeHtml(person.level)}</span><strong>${escapeHtml(value || "Open")}</strong></div>`;
-      }).join("")}</div></article>`;
-      }).join("");
+      const differentBlocksHtml = partitions.different.length
+        ? `<div class="compare-different-body"><div class="compare-block-list">${partitions.different.map(item => `<article class="compare-block-card"><div class="compare-block-meta"><strong>${escapeHtml(item.block)}</strong><span>${escapeHtml(item.dates)}</span></div><div class="compare-block-assignments">${item.assignments.map(entry => `<div class="compare-assignment-chip ${entry.value ? "" : "is-open"}" style="${choiceStyle(entry.value)}"><span>${escapeHtml(entry.person.name)} · ${escapeHtml(entry.person.level)}</span><strong>${escapeHtml(entry.value || "Open")}</strong></div>`).join("")}</div></article>`).join("")}</div></div>`
+        : `<div class="compare-section-empty">All 13 blocks have identical rotation assignments.</div>`;
+      const differentSectionHtml = `<section class="compare-section"><div class="compare-section-head"><div><strong>Different blocks</strong><span>Only blocks where the selected residents do not match</span></div><b class="compare-section-count">${partitions.different.length} of ${BLOCKS.length}</b></div>${differentBlocksHtml}</section>`;
+      const totalsHtml = `<details class="compare-totals"><summary><div><strong>Combined rotation totals</strong><small>Total first, then each resident's count</small></div><span>Optional</span></summary><div class="compare-totals-grid"><div class="compare-rotation-grid">${rotationHtml}</div></div></details>`;
       els.compareResidentReportSubtitle.textContent = residents.map(person => `${person.name} · ${person.level}`).join("  |  ");
-      els.compareResidentReport.innerHTML = `<div class="compare-report-summary"><div><strong>${residents.length} residents compared</strong><span>Final Done by the Chief · read-only comparison</span></div><b>${totalAssignments} slots</b></div>${sharedArrangementHtml}<div class="compare-report-heading"><strong>Combined rotation counter</strong><span>Total first, then each resident's count</span></div><div class="compare-rotation-grid">${rotationHtml}</div><div class="compare-report-heading"><strong>Block-by-block comparison</strong><span>All 13 final blocks</span></div><div class="compare-block-list">${blocksHtml}</div>`;
+      els.compareResidentReport.innerHTML = `<div class="compare-report-summary"><div><strong>${residents.length} residents compared</strong><span>Every block appears once—shared or different</span></div><div class="compare-summary-stats"><div class="compare-summary-stat"><b>${partitions.shared.length}</b><span>Shared</span></div><div class="compare-summary-stat"><b>${partitions.different.length}</b><span>Different</span></div></div></div>${sharedSectionHtml}${differentSectionHtml}${totalsHtml}`;
       els.compareResidentPickerView.hidden = true;
       els.compareResidentReportView.hidden = false;
       els.compareResidentReport.scrollTop = 0;
