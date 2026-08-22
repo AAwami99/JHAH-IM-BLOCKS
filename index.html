@@ -3668,7 +3668,9 @@
         // Continue the dark header behind the complete two-row table heading.
         // This removes the light side gaps beside the Resident / Next columns
         // and gives the table a deliberate, full-width transition from the title.
-        fill(headerColor, 0, tableTop - headerRowHeight * 2, pageWidth, headerRowHeight * 2),
+        // Extend two points upward to meet the title panel exactly; without this,
+        // the page background shows through as a thin white seam above the blocks.
+        fill(headerColor, 0, tableTop - headerRowHeight * 2, pageWidth, headerRowHeight * 2 + 2),
         text("JHAH  /  RESIDENCY OPERATIONS", 28, 815, "F2", 8, "0.72 0.90 0.88"),
         text("JHAH Resident Block Distribution, 2027", 28, 786, "F2", 20, "1 1 1"),
         fill("0.12 0.36 0.39", 1040, 779, 123, 42),
