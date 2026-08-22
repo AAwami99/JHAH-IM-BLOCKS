@@ -3665,15 +3665,19 @@
       const commands = [
         fill("0.965 0.976 0.976", 0, 0, pageWidth, pageHeight),
         fill(headerColor, 0, 760, pageWidth, 82),
+        // Continue the dark header behind the complete two-row table heading.
+        // This removes the light side gaps beside the Resident / Next columns
+        // and gives the table a deliberate, full-width transition from the title.
+        fill(headerColor, 0, tableTop - headerRowHeight * 2, pageWidth, headerRowHeight * 2),
         text("JHAH  /  RESIDENCY OPERATIONS", 28, 815, "F2", 8, "0.72 0.90 0.88"),
         text("JHAH Resident Block Distribution, 2027", 28, 786, "F2", 20, "1 1 1"),
         fill("0.12 0.36 0.39", 1040, 779, 123, 42),
         centeredText(actualResidents.length, 1040, 123, 800, "F2", 15, "1 1 1"),
         centeredText("RESIDENTS", 1040, 123, 787, "F1", 6, "0.72 0.90 0.88"),
-        fill(headerColor, tableX, tableTop - headerRowHeight, columnWidths[0], headerRowHeight * 2),
-        fill(headerColor, columnX[1], tableTop - headerRowHeight, columnWidths[1], headerRowHeight * 2),
-        fill(headerColor, columnX[15], tableTop - headerRowHeight, columnWidths[15], headerRowHeight * 2),
-        fill(headerColor, columnX[16], tableTop - headerRowHeight, columnWidths[16], headerRowHeight * 2),
+        fill(headerColor, tableX, tableTop - headerRowHeight * 2, columnWidths[0], headerRowHeight * 2),
+        fill(headerColor, columnX[1], tableTop - headerRowHeight * 2, columnWidths[1], headerRowHeight * 2),
+        fill(headerColor, columnX[15], tableTop - headerRowHeight * 2, columnWidths[15], headerRowHeight * 2),
+        fill(headerColor, columnX[16], tableTop - headerRowHeight * 2, columnWidths[16], headerRowHeight * 2),
         centeredText("RESIDENT", columnX[0], columnWidths[0], tableTop - 25, "F2", 7, "1 1 1"),
         centeredText("YEAR", columnX[1], columnWidths[1], tableTop - 25, "F2", 6, "1 1 1"),
         centeredText("NEXT", columnX[15], columnWidths[15], tableTop - 25, "F2", 6, "1 1 1"),
