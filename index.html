@@ -1038,6 +1038,9 @@
           <button id="editRequestsBtn" class="button resident-action" type="button">Edit my requests</button>
           <button id="exportBtn" class="button" type="button">Export requested Excel</button>
           <button id="exportPdfBtn" class="button pdf-export" type="button" hidden>Export final PDF</button>
+          <button id="downloadBackupBtn" class="button backup-action" type="button" hidden>Download backup</button>
+          <button id="restoreBackupBtn" class="button backup-action" type="button" hidden>Restore backup</button>
+          <input id="restoreBackupFile" type="file" accept="application/json,.json" hidden />
           <button id="saveBtn" class="button primary" type="button">Save changes</button>
         </div>
       </section>
@@ -1561,6 +1564,9 @@
       editRequests: document.getElementById("editRequestsBtn"),
       exportButton: document.getElementById("exportBtn"),
       exportPdfButton: document.getElementById("exportPdfBtn"),
+      downloadBackup: document.getElementById("downloadBackupBtn"),
+      restoreBackup: document.getElementById("restoreBackupBtn"),
+      restoreBackupFile: document.getElementById("restoreBackupFile"),
       saveButton: document.getElementById("saveBtn"),
       rotationPanel: document.getElementById("rotationPanel"),
       palette: document.getElementById("palette"),
@@ -2577,6 +2583,7 @@
       const isResidentJourney = isSpecialty && specialtyMode() === "resident";
       document.querySelectorAll(".chief-action").forEach(button => button.hidden = !isActual);
       document.querySelectorAll(".resident-action").forEach(button => button.hidden = !isRequested);
+      document.querySelectorAll(".backup-action").forEach(button => button.hidden = !chiefSignedIn);
       els.manageFundamentals.hidden = !chiefSignedIn || (!isRequested && !isActual);
       els.rotationPanel.hidden = !isActual;
       els.exportButton.hidden = isComparison || isSpecialty;
@@ -3343,6 +3350,87 @@
       setTimeout(() => URL.revokeObjectURL(href), 1000);
     }
 
+    async function downloadBackup() {
+      if (!chiefSignedIn || !chiefToken) {
+        openChiefDialog();
+        toast("Chief access is required to download a backup.", "warn");
+        return;
+      }
+      els.downloadBackup.disabled = true;
+      try {
+        const response = await fetch("/api/backup", { headers: { "x-chief-token": chiefToken }, cache: "no-store" });
+        const backup = await response.json().catch(() => ({}));
+        if (response.status === 401) { expireChiefSession(); return; }
+        if (!response.ok) { toast(backup.error || "The backup could not be created.", "warn"); return; }
+        const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+        downloadBlob(new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" }), `JHAH-Resident-Blocks-Backup-${stamp}.json`);
+        toast("Complete shared backup downloaded. Keep this JSON file in a safe place.", "success");
+      } catch (error) {
+        console.warn("Backup download failed", error);
+        toast("The backup could not be downloaded. Please try again.", "warn");
+      } finally {
+        els.downloadBackup.disabled = false;
+      }
+    }
+
+    function chooseBackupToRestore() {
+      if (!chiefSignedIn || !chiefToken) {
+        openChiefDialog();
+        toast("Chief access is required to restore a backup.", "warn");
+        return;
+      }
+      els.restoreBackupFile.value = "";
+      els.restoreBackupFile.click();
+    }
+
+    async function restoreBackupFromFile(file) {
+      if (!file) return;
+      if (!chiefSignedIn || !chiefToken) {
+        toast("Chief access is required to restore a backup.", "warn");
+        return;
+      }
+      if (file.size > 25 * 1024 * 1024) {
+        toast("This backup file is too large to restore in the browser.", "warn");
+        return;
+      }
+      let backup;
+      try { backup = JSON.parse(await file.text()); }
+      catch { toast("Choose a valid JHAH backup JSON file.", "warn"); return; }
+      if (!confirm("Restore this complete backup? It will replace the current shared schedules, residents, settings, and change log for everyone.")) return;
+      els.restoreBackup.disabled = true;
+      try {
+        const response = await fetch("/api/backup/restore", {
+          method: "POST",
+          headers: { "content-type": "application/json", "x-chief-token": chiefToken },
+          body: JSON.stringify({ backup }),
+        });
+        const result = await response.json().catch(() => ({}));
+        if (response.status === 401) { expireChiefSession(); return; }
+        if (!response.ok) { toast(result.error || "The backup could not be restored.", "warn"); return; }
+        const committedState = normalizedSerializableState(result.state);
+        applySerializableState(committedState);
+        signedResidentId = requestedResidents.some(person => person.id === signedResidentId) ? signedResidentId : null;
+        selectedRotation = null;
+        fundamentalsUnlocked = false;
+        undoStack = [];
+        redoStack = [];
+        dirty = false;
+        serverRevision = Number(result.revision) || 0;
+        lastSyncedState = cloneSerializable(committedState);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(committedState));
+        setSavedLabel(`Backup restored ${formatTimestamp(result.savedAt)}`, "is-saved");
+        render();
+        await loadAuditLog({ notify: false });
+        toast(`Complete backup restored: ${result.restoredAuditEntries || 0} change-log entries recovered.`, "success");
+      } catch (error) {
+        console.warn("Backup restore failed", error);
+        toast("The backup could not be restored. The current shared data was not changed.", "warn");
+      } finally {
+        els.restoreBackup.disabled = false;
+        els.restoreBackupFile.value = "";
+      }
+    }
+
     function makeSpecialtySheetXml() {
       const rotation = els.specialtyRotation.value || "Night Float";
       const rows = specialtyRows(rotation);
@@ -4017,6 +4105,9 @@
     els.saveButton.addEventListener("click", () => saveChanges());
     els.exportButton.addEventListener("click", () => exportExcel(false));
     els.exportPdfButton.addEventListener("click", exportFinalPdf);
+    els.downloadBackup.addEventListener("click", downloadBackup);
+    els.restoreBackup.addEventListener("click", chooseBackupToRestore);
+    els.restoreBackupFile.addEventListener("change", () => restoreBackupFromFile(els.restoreBackupFile.files?.[0]));
     els.reset.addEventListener("click", resetBaseline);
     document.addEventListener("keydown", event => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {

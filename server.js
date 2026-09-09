@@ -41,6 +41,8 @@ const validToken = (token, req) => {
   return false;
 };
 const chief = req => validToken(req.headers['x-chief-token'], req);
+const BACKUP_FORMAT = 'jhah-resident-block-distribution-backup';
+const BACKUP_VERSION = 1;
 const ROTATION_NAMES = new Set(['Internal Medicine', 'Night Float', 'Stepdown', 'Cardiology', 'Nephrology', 'Gastroenterology', 'Pulmonology', 'Infectious Disease', 'Neurology', 'ER', 'Elective', 'ICU', 'Rheumatology', 'Hematology', 'Endocrinology', 'Oncology']);
 const NAJD_BASELINE = { id: 'r4-najd', name: 'Najd', level: 'R4', endLevel: 'R4', assignments: ['Internal Medicine', 'Internal Medicine', null, null, null, null, 'Stepdown', null, null, null, null, null, null] };
 const mergeNajd = (residents, deletedIds = []) => {
@@ -68,6 +70,61 @@ const cleanText = (value, fallback = '', max = 80) => {
   return (text || fallback).slice(0, max);
 };
 const list = value => Array.isArray(value) ? value : [];
+const backupHash = payload => crypto.createHash('sha256').update(JSON.stringify(payload)).digest('hex');
+const backupPayload = (stateRows, auditRows) => ({
+  format: BACKUP_FORMAT,
+  version: BACKUP_VERSION,
+  exportedAt: new Date().toISOString(),
+  appState: Object.fromEntries(stateRows.map(row => [row.key, {
+    value: row.value,
+    revision: Number(row.revision) || 0,
+    updatedAt: row.updated_at,
+  }])),
+  audit: auditRows.map(row => ({
+    id: Number(row.id),
+    revision: Number(row.revision) || 0,
+    occurredAt: row.occurred_at,
+    actorType: row.actor_type,
+    actorId: row.actor_id,
+    actorName: row.actor_name,
+    area: row.area,
+    summary: row.summary,
+    details: row.details || {},
+    deletedAt: row.deleted_at,
+    deletedBy: row.deleted_by,
+  })),
+});
+const parseBackup = backup => {
+  if (!backup || typeof backup !== 'object' || backup.format !== BACKUP_FORMAT || Number(backup.version) !== BACKUP_VERSION) throw new Error('This is not a valid JHAH backup file.');
+  const { checksum, ...payload } = backup;
+  if (!checksum || !sameDigest(checksum, backupHash(payload))) throw new Error('This backup file appears to be incomplete or has been changed.');
+  if (!payload.appState || typeof payload.appState !== 'object' || Array.isArray(payload.appState) || !payload.appState.schedule) throw new Error('The backup does not include a schedule.');
+  const appState = Object.entries(payload.appState).map(([key, record]) => {
+    if (!/^[a-z][a-z0-9_-]{0,100}$/i.test(key) || !record || typeof record !== 'object' || !Object.hasOwn(record, 'value')) throw new Error('The backup contains an invalid saved setting.');
+    if (key === 'schedule' && (!record.value || typeof record.value !== 'object' || !Array.isArray(record.value.requestedResidents) || !Array.isArray(record.value.actualResidents))) throw new Error('The backup schedule is incomplete.');
+    const revision = Math.max(0, Math.floor(Number(record.revision) || 0));
+    return { key, value: key === 'schedule' ? migrateSchedule(record.value) : record.value, revision, updatedAt: record.updatedAt && Number.isFinite(Date.parse(record.updatedAt)) ? record.updatedAt : new Date().toISOString() };
+  });
+  const audit = list(payload.audit).map(record => {
+    const id = Number(record?.id);
+    if (!Number.isSafeInteger(id) || id < 1) throw new Error('The backup contains an invalid change-log entry.');
+    return {
+      id,
+      revision: Math.max(0, Math.floor(Number(record.revision) || 0)),
+      occurredAt: record.occurredAt && Number.isFinite(Date.parse(record.occurredAt)) ? record.occurredAt : new Date().toISOString(),
+      actorType: cleanText(record.actorType, 'chief', 30),
+      actorId: record.actorId ? cleanText(record.actorId, '', 100) : null,
+      actorName: cleanText(record.actorName, 'Chief', 100),
+      area: cleanText(record.area, 'schedule', 30),
+      summary: cleanText(record.summary, 'Schedule change', 500),
+      details: record.details && typeof record.details === 'object' && !Array.isArray(record.details) ? record.details : {},
+      deletedAt: record.deletedAt && Number.isFinite(Date.parse(record.deletedAt)) ? record.deletedAt : null,
+      deletedBy: record.deletedBy ? cleanText(record.deletedBy, '', 100) : null,
+    };
+  });
+  if (new Set(audit.map(item => item.id)).size !== audit.length) throw new Error('The backup has duplicate change-log entries.');
+  return { appState, audit };
+};
 const changedSet = (before, after, key) => {
   const oldSet = new Set(list(before?.[key]).map(String));
   const newSet = new Set(list(after?.[key]).map(String));
@@ -402,6 +459,50 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, { ok: true, token: tokenFor(req) });
     }
     if (pathname === '/api/chief/password' && req.method === 'PUT') { if (!chief(req)) return json(res, 401, { error: 'Chief access required.' }); const { password } = await readBody(req); if (!password || password.length < 8) return json(res, 400, { error: 'Password must be at least 8 characters.' }); await pool.query("INSERT INTO app_state(key,value) VALUES('chief_password',$1) ON CONFLICT(key) DO UPDATE SET value=$1", [{ password }]); return json(res, 200, { ok: true }); }
+    if (pathname === '/api/backup' && req.method === 'GET') {
+      if (!chief(req)) return json(res, 401, { error: 'Chief access required.' });
+      const [stateRows, auditRows] = await Promise.all([
+        pool.query('SELECT key,value,revision,updated_at FROM app_state ORDER BY key'),
+        pool.query('SELECT id,revision,occurred_at,actor_type,actor_id,actor_name,area,summary,details,deleted_at,deleted_by FROM schedule_audit ORDER BY id'),
+      ]);
+      const payload = backupPayload(stateRows.rows, auditRows.rows);
+      return json(res, 200, { ...payload, checksum: backupHash(payload) });
+    }
+    if (pathname === '/api/backup/restore' && req.method === 'POST') {
+      if (!chief(req)) return json(res, 401, { error: 'Chief access required.' });
+      const { backup } = await readBody(req);
+      let restored;
+      try { restored = parseBackup(backup); }
+      catch (error) { return json(res, 400, { error: error.message || 'The backup file could not be restored.' }); }
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        await client.query("SELECT pg_advisory_xact_lock(hashtext('jhah-schedule'))");
+        await client.query("SELECT pg_advisory_xact_lock(hashtext('jhah-audit-dismiss'))");
+        await client.query('DELETE FROM schedule_audit');
+        await client.query('DELETE FROM app_state');
+        for (const row of restored.appState) {
+          await client.query('INSERT INTO app_state(key,value,revision,updated_at) VALUES($1,$2,$3,$4)', [row.key, row.value, row.revision, row.updatedAt]);
+        }
+        for (const row of restored.audit) {
+          await client.query('INSERT INTO schedule_audit(id,revision,occurred_at,actor_type,actor_id,actor_name,area,summary,details,deleted_at,deleted_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)', [row.id, row.revision, row.occurredAt, row.actorType, row.actorId, row.actorName, row.area, row.summary, row.details, row.deletedAt, row.deletedBy]);
+        }
+        const importedSchedule = restored.appState.find(row => row.key === 'schedule');
+        const maxAuditId = restored.audit.reduce((maximum, row) => Math.max(maximum, row.id), 0);
+        if (maxAuditId) await client.query("SELECT setval(pg_get_serial_sequence('schedule_audit','id'), $1, true)", [maxAuditId]);
+        const restoreRevision = (importedSchedule?.revision || 0) + 1;
+        await client.query("UPDATE app_state SET revision=$1, updated_at=now() WHERE key='schedule'", [restoreRevision]);
+        await insertAudit(client, { revision: restoreRevision, actorType: 'chief', actorId: null, actorName: 'Chief', area: 'schedule', summary: 'Chief restored a complete backup.', details: { backupRestored: true, restoredStateKeys: restored.appState.length, restoredAuditEntries: restored.audit.length } });
+        const saved = await client.query("SELECT value,updated_at,revision FROM app_state WHERE key='schedule'");
+        await client.query('COMMIT');
+        return json(res, 200, { ok: true, state: migrateSchedule(saved.rows[0]?.value), revision: Number(saved.rows[0]?.revision) || restoreRevision, savedAt: saved.rows[0]?.updated_at || new Date().toISOString(), restoredAuditEntries: restored.audit.length });
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
+    }
     if (pathname === '/api/baseline/restore' && req.method === 'POST') {
       if (!chief(req)) return json(res, 401, { error: 'Chief access required.' });
       const { state } = await readBody(req);
